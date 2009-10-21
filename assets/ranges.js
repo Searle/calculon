@@ -6,41 +6,38 @@
         if ( this === window ) return new Ranges(ranges);
 
         var isFunction= function( obj ) {
-            return toString.call(obj) === "[object Function]"
+            return Object.prototype.toString.call(obj) === "[object Function]"
         }
 
         var isArray= function(obj) {
-            return toString.call(obj) === "[object Array]"
+            return Object.prototype.toString.call(obj) === "[object Array]"
         };
 
-        var stringToCell(str) {
+        var stringToCell= function(str) {
             var col= "ABCDEFGHIJKLMNOPQRSTUVWXYZ".indexOf(str.substr(0, 1));
             if ( col < 0 ) throw "NoValidCellName";
             var row= parseInt(str.substr(1), 10);
-            if ( isNaN(row) ) throw "NoValidCellName";
-            return [ col, row ];
+            if ( isNaN(row) || row <= 0 ) throw "NoValidCellName";
+            return [ col, row - 1 ];
         };
 
-        var _addRange( ranges, args ) {
-            if ( args.length === 1 ) {
-                var arg1= args[1];
-                if ( isArray(arg1) ) {
-                    if ( arg1.length === 2 ) {
-                        var cellTL= stringToCell(arg1[0]);
-                        var cellBR= stringToCell(arg1[1]);
-                        ranges.push([ cellTL[0], cellTL[1], cellBR[0], cellBR[1] ]);
-                        return;
-                    }
+        var _addRange= function( ranges, args ) {
+            if ( isArray(args) ) {
+                if ( args.length === 2 ) {
+                    var cellTL= stringToCell(args[0]);
+                    var cellBR= stringToCell(args[1]);
+                    ranges.push([ cellTL[0], cellTL[1], cellBR[0], cellBR[1] ]);
+                    return ranges;
                 }
             }
             throw "ArgException";
         };
 
-        var addRange() {
-            return new Ranges(_addRange(ranges.concat(), arguments));
+        var addRange= function() {
+            return new Ranges(_addRange(ranges.concat(), Array.prototype.slice.call(arguments)));
         }
 
-        var addRanges( newRanges ) {
+        var addRanges= function( newRanges ) {
             var newNewRanges= ranges.concat();
             for each (var range in newRanges) _addRange(newNewRanges, range);
         };
@@ -109,5 +106,8 @@
         this.intersection= intersection;
         this.union= union;
         this.flatten= flatten;
+
+this.ranges= ranges;
+
     }
 

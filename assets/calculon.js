@@ -529,7 +529,8 @@ console.log("deps=", deps, "assign=", assign, "tokens=", tokens, "expr=", expr);
     //   MAIN
     // ========================================================================
 
-    var db= new Db();
+    // we don't need google gears
+    // var db= new Db();
 
     // var qs= new Qs();
     // var users= new Users(db, qs);
