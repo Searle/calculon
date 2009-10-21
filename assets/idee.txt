@@ -1,0 +1,176 @@
+
+
+Wie jQuery: immer mit arrays arbeiten
+
+------------------------------------------------------------------------------
+
+=SVERWEIS($A25; Konten!$A$1:$BE$1079; 3; 0)
+
+=Konten.Namen($A25,#3)
+
+=$Konten.Konten[3].grep($A25)
+
+
+=Konten.Namen(#L1, xofs=3)
+
+
+
+------------------------------------------------------------------------------
+
+=SUMMEWENN(Konten!$E$1:$E$1136;$A25;Konten!CJ$1:CJ$1136)
+
+function OFS(p1, p2) {
+    return p2.OFS() - p1.OFS();
+}
+
+function SUMMEWENN( keys, key, values ) {
+    // keys.FILTER(value).OFS(values.POS() - keys.POS()).SUMME()
+
+    keys.FILTER(value).OFS(values.OFS(keys)).SUMME()
+}
+
+Konten.Nummern.SUMMEWENN($A25, Konten.Werte('0701' ..))
+
+
+SUMMEWENN(Konten.Nummern, $A25, Konten.Werte('0701' ..))
+
+
+Konten.Nummern.FILTER($A25).OFS(Konten.Werte['0701'].ROW() - Konten.Nummern.ROW()).SUMME()
+
+------------------------------------------------------------------------------
+
+=WENNFEHLER($I17 * SVERWEIS($A17; 
+                        INDIREKT(
+                            ADRESSE(1; WENN(ISTLEER($B17); 1; 3); 1; WAHR; T$3)
+                            & ":" & ADRESSE(999;29;1)
+                        );
+                        WENN(ISTLEER($B17); 8; 5);
+                        FALSCH); 0)
+
+
+[ $B17.isEmpty.if(1, 3), 1 : 1, 999 ].LOOKUP($A17, $B17.isEmpty.if(8, 5))
+
+[ $B17.isEmpty([1, 1], [3, 1]), 1, A7 ].grep($A17).ofs($B17.isEmpty([8, 0], [5, 0]))
+
+
+- holt aus rohdaten
+- ADRESSE(iSpalte; $iZeile; Spalte/Zeile relativ; A1 oder S1Z1; sTabelle)
+- wenn kein S oder H in $B17 ist Wert in Spalte 1
+- sonst in Spalte 3
+- in $T3 steht der Tabellenname
+- FALSCH: eine genaue Entsprechung wird gesucht
+
+Operiert immer auf Ranges ausser toString (-> val()) wird angefordert, z.b. zum Display
+
+------------------------------------------------------------------------------
+
+- Absolut: Aendert sich nie
+- Relativ: Aendert sich bei Zeilen-Einfuegen o.ä.
+
+// Zweiter Param: Min Version
+// Dritter Param: Max Version. wenn weggelassen: floor(MinVersion + 1) - 0.001 o.ä.
+zuppi= import("zuppi.fxls", 1.6, 1.9);
+zappi= zuppi.zappi;
+
+zuppi.A10
+
+$A10
+$R1C10
+R[-1]C10
+[ 1, 10 ] = USD(1000)
+[ $1, 10 ] = EU(1000)
+
+[ 1, 10 : 2, 10 ] // $A10:$B20
+[ 1, 10, 2, 2 ]   // $A10:$C12 (width, height)
+feld                    // absolut, wie geht relativ?
+feld : [ 2, 10 ]
+feld[10]                // feld .+ [ 10, 0 ]
+feld[0,1]
+feld
+
+feld[0 : 20] = this.OFS(feld)
+feld[0 : 20] = this.COLOFS()
+
+=feld:this
+
+=feld:this;A1:A10       // Vereinigung. Evt selten genug und nur über eine Funktion: [feld:this].union(A1:A10)
+=feld:this A1:A10       // Schnitt
+
+- Aktuelle Zelle ist this
+
+$feld
+
+X$feld          // Wuerde gehn wenn statt ROW und COL ueberall X und Y verwendet wuerde
+Y$feld
+
+feld[]          feld.OFS(0,0)   [0, 0].OFS(feld)
+feld[$0]        feld.OFS($0,0)
+feld[,$0]       feld.OFS(0,$0)
+
+5:5     // Zeile
+H:H     // Spalte. Mehrere: H:J
+
+
+A16 = 5 * B1:B100
+
+
+// Weite Stichworte: Implizite Schnittmenge, 3D-Bezüge
+
+
+        A       B
+1       i=17    j=13
+2       =a1+a2
+3       =i+j
+
+
+=JS<?=
+?>
+
+[A21] color=red: zuppi=210
+[A21:B33] color=blue
+
+------------------------------------------------------------------------------
+
+function SCHNITT() {
+    // ?
+}
+
+
+Range
+    = Cell
+Offset
+Value
+
+
+
+------------------------------------------------------------------------------
+
+Probleme:
+- Namen sind absolut, A2 etc gerade nicht
+
+------------------------------------------------------------------------------
+
+Aus Excel Hilfe:
+Argumente können sein:
+- Zahlen
+- Text
+- Wahrheitswerte wie WAHR oder FALSCH
+- Matrizen (Matrix: Wird verwendet, um einzelne Formeln zu erstellen, die mehrere Ergebnisse
+  liefern oder die auf eine Gruppe von in Zeilen und Spalten angeordneten Argumenten
+  angewendet werden. Ein Matrixbereich ist ein rechteckiger Bereich aus Zellen, die
+  auf einer gemeinsamen Formel basieren; eine Matrixkonstante ist eine Gruppe von
+  Konstanten, die als Argument verwendet wird.)
+- Fehlerwerte wie #NV
+- Zellbezüge (Zellbezug: Die Koordinaten, die eine Zelle im Tabellenblatt einnimmt.
+  Der Verweis der Zelle, die an der Schnittstelle der Spalte B mit der Zeile 3 angezeigt
+  wird, lautet beispielsweise B3.) sein.
+Das Argument, das Sie benennen, muss einen für dieses Argument gültigen Wert ergeben.
+Argumente können auch sein:
+- Konstanten (Konstante: Ein Wert, der nicht berechnet wird und
+  sich aus diesem Grund auch nicht ändert. Die Zahl 210 und der Text "Quartalseinnahmen"
+  stellen z. B. Konstanten dar. Ein Ausdruck oder ein aus einem Ausdruck resultierender
+  Wert ist keine Konstante.)
+- Formeln
+- andere Funktionen
+
+EOF
