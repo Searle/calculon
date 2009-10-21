@@ -130,6 +130,23 @@ A16 = 5 * B1:B100
 [A21:B33] color=blue
 
 ------------------------------------------------------------------------------
+JS:
+
+
+C('B10','E20').crop(0,0)                  // B10:B10
+C('B10','E20').crop(1,1)                  // C11:C11
+C('B10','E20').crop(1,1, C('E20').dist('B10') - 1, 2)             // C11:D13
+C('B10','E20').crop(1,1, -2, -2)          // C11:C18
+C('B10','E20').crop(1,1)
+
+function SVERWEIS(searchR, value, col_i) {
+    var col= searchR.crop(0, 0, 1, Inf).grep(value);
+    if ( col.length === 0 ) return Empty;
+    return col.range(0).ofs(col_i, 0);
+}
+
+
+------------------------------------------------------------------------------
 
 function SCHNITT() {
     // ?
