@@ -70,9 +70,44 @@
             return new Ranges([ newRange ]);
         }
 
+        var flatten= function () {
+            var ranges= ranges.concat();
+            var lookup= {};
+            var newRanges= [];
+            for each (var range in ranges) {
+                for ( var y= range[1]; y <= range[3]; y++ ) {
+                    for ( var x= range[1]; x <= range[2]; x++ ) {
+                        if ( lookup[x + ':' + y] ) continue;
+                        newRanges.push([x, y, x, y]);
+                        lookup[x + ':' + y]= 1;
+                    }
+                }
+            }
+            return new Ranges(newRanges);
+/*
+            ranges.sort(function(a, b) {
+                return b[1] - a[1] || b[0] - a[0];
+            });
+            var newRanges= [];
+            var x0= -1;
+            var x1= -1;
+            var y= Number.MAX_VALUE;
+            var ends= {};
+            for each (var range in ranges) {
+                while ( y < range[1] ) {
+                    for ( var x= x0; x <= x1; x++ ) newRanges.push([x, y]);
+                    y++;
+                }
+                if ( range[0] < x0 ) x0= range[0];
+                if ( range[2] > x1 ) x1= range[2];
+            }
+*/
+        };
+
         this.addRange= addRange;
         this.addRanges= addRanges;
         this.intersection= intersection;
         this.union= union;
+        this.flatten= flatten;
     }
 
