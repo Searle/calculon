@@ -136,10 +136,6 @@
         var _flatten= function () {
             var lookup= {};
             var newRanges= [];
-
-console.log("Hu");
-var i= 1000;
-
             for each (var range in ranges) {
 console.log(range)
                 for ( var y= range[1]; y <= range[3]; y++ ) {
@@ -147,9 +143,6 @@ console.log(range)
                         if ( lookup[x + ':' + y] ) continue;
                         newRanges.push([x, y, x, y]);
                         lookup[x + ':' + y]= 1;
-
-if (i-- == 0) sdfkhsdfk();
-
                     }
                 }
             }
@@ -186,7 +179,7 @@ if (i-- == 0) sdfkhsdfk();
         var grep= function (value) {
             var newRanges= [];
             for each (var range in _flatten()) {
-                if ( C(range[0], range[1]) == value ) {
+                if ( C(range[0], range[1]).value == value ) {
                     newRanges.push(range);
                 }
             }

@@ -11,18 +11,22 @@ flat= newranges.flatten();
 var Inf= Number.MAX_VALUE;
 var EmptyRanges= new Ranges();
 
+C(0, 0).value= "A1";
+C(0, 1).value= "A2";
+C(0, 2).value= "A3";
+C(0, 3).value= "A4";
+
 function SVERWEIS(searchRanges, value, col_i) {
 
-
-    var col= searchRanges.crop(0, 0, 0, Inf);
+    var col= searchRanges.crop(0, 0, 0, Inf).grep(value);
 
 searchRanges._dump("searchRanges");
 col._dump("col");
 
-    var col= searchRanges.crop(0, 0, 1, Inf).grep(value);
+    var col= searchRanges.crop(0, 0, 0, Inf).grep(value);
     if ( col.length === 0 ) return EmptyRanges;
-    return col.crop(col_i, 1);
+    return col; // .addRange(?).crop(col_i, 1);
 }
 
-sv= SVERWEIS(ranges, 3, 2);
-console.log(sv);
+sv= SVERWEIS(ranges, "A3", 2);
+sv._dump("sv");
