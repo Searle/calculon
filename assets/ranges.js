@@ -15,6 +15,11 @@
         return cells[key];
     };
 
+    var _C= function(x, y) {
+        var key= x + ':' + y;
+        return cells[key];
+    };
+
     var Ranges= function(ranges) {
 
         if ( ranges === undefined ) ranges= [];
@@ -234,7 +239,8 @@ while ( y < range[1] ) {
         var grep= function ( value ) {
             var newRanges= [];
             for each ( var range in _flatten() ) {
-                if ( C(range[0], range[1]).value == value ) {
+                var cell= _C(range[0], range[1]);
+                if ( cell !== undefined && cell.value == value ) {
                     newRanges.push(range);
                 }
             }

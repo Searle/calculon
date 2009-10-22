@@ -39,6 +39,16 @@ Konten.Nummern.FILTER($A25).OFS(Konten.Werte['0701'].ROW() - Konten.Nummern.ROW(
 
 ------------------------------------------------------------------------------
 
+Ranges sind gebunden an
+- Cells
+- Functions?
+
+- jede Funktion merkt sich seine Umgebung
+
+grep ist abhaengig von Range
+
+------------------------------------------------------------------------------
+
 =WENNFEHLER($I17 * SVERWEIS($A17; 
                         INDIREKT(
                             ADRESSE(1; WENN(ISTLEER($B17); 1; 3); 1; WAHR; T$3)
