@@ -126,12 +126,19 @@
         var _flatten= function () {
             var lookup= {};
             var newRanges= [];
+
+console.log("Hu");
+var i= 1000;
+
             for each (var range in ranges) {
                 for ( var y= range[1]; y <= range[3]; y++ ) {
                     for ( var x= range[0]; x <= range[2]; x++ ) {
                         if ( lookup[x + ':' + y] ) continue;
                         newRanges.push([x, y, x, y]);
                         lookup[x + ':' + y]= 1;
+
+if (i-- == 0) sdfkhsdfk();
+
                     }
                 }
             }
