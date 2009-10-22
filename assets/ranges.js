@@ -36,12 +36,21 @@
 
         var _addRange= function( ranges, args ) {
             if ( isArray(args) ) {
+                if ( args.length === 1 ) return _addRange(ranges, args[0]);
                 if ( args.length === 2 ) {
                     var cellTL= stringToCell(args[0]);
                     var cellBR= stringToCell(args[1]);
                     ranges.push([ cellTL[0], cellTL[1], cellBR[0], cellBR[1] ]);
                     return ranges;
                 }
+                if ( args.length === 4 ) {
+                    ranges.push(args);
+                    return ranges;
+                }
+            }
+            else if ( typeof args === 'object' && args instanceof Ranges ) {
+                for each (var r in args._ranges) _addRange(ranges, r);
+                return ranges;
             }
             throw "ArgException";
         };
@@ -53,6 +62,7 @@
         var addRanges= function( newRanges ) {
             var newNewRanges= ranges.concat();
             for each (var range in newRanges) _addRange(newNewRanges, range);
+            return new Ranges(newNewRanges);
         };
 
         var intersection= function () {

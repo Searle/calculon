@@ -1,10 +1,14 @@
-var ranges= new Ranges().addRange( 'A1', 'B20' );
+var range= new Ranges().addRange( 'A1', 'B20' );
 
-console.log(ranges.ranges);
+console.log('range.ranges: ', range._ranges);
 
-var newranges= ranges.addRange( 'C3', 'D7' );
+var newrange= range.addRange( 'C3', 'D7' );
 
-console.log(newranges.ranges);
+console.log('newrange.ranges: ', newrange._ranges);
+
+newrange= newrange.addRanges( [ range, newrange ] );
+
+console.log('newrange.ranges: ', newrange._ranges);
 
 
 
