@@ -109,16 +109,26 @@
         };
 
         var crop= function(x0, y0, x1, y1) {
+            // TODO: pruefen auf x0/y0 < 0
             if ( x1 === undefined ) x1= x0;
             if ( y1 === undefined ) y1= y1;
             var newRanges= [];
             for each (var range in ranges) {
-                newRanges.push([
+/*                newRanges.push([
                     (x0 >= range[0] ? x0 : range[0]),
                     (y0 >= range[1] ? y0 : range[1]),
-                    (x1 >= range[2] ? x1 : range[2]),
-                    (y1 >= range[3] ? y1 : range[3])
+                    (x1 <= range[2] ? x1 : range[2]),
+                    (y1 <= range[3] ? y1 : range[3])
                 ]);
+*/
+                var newRange= [
+                    x0 + range[0],
+                    y0 + range[1],
+                    (x1 + range[0] <= range[2] ? x1 + range[0] : range[2]),
+                    (y1 + range[1] <= range[3] ? y1 + range[1] : range[3])
+                ];
+                if ( newRange[0] > newRange[2] || newRange[1] > newRange[3] ) continue;
+                newRanges.push(newRange);
             }
             return new Ranges(newRanges);
         };
@@ -131,6 +141,7 @@ console.log("Hu");
 var i= 1000;
 
             for each (var range in ranges) {
+console.log(range)
                 for ( var y= range[1]; y <= range[3]; y++ ) {
                     for ( var x= range[0]; x <= range[2]; x++ ) {
                         if ( lookup[x + ':' + y] ) continue;

@@ -1,4 +1,4 @@
-var ranges= new Ranges().addRange( 'A1', 'B5' );
+var ranges= new Ranges().addRange( 'C5', 'D6' );
 
 console.log(ranges.ranges);
 
@@ -14,7 +14,7 @@ var EmptyRanges= new Ranges();
 function SVERWEIS(searchRanges, value, col_i) {
 
 
-    var col= searchRanges.crop(0, 0, 1, Inf);
+    var col= searchRanges.crop(0, 0, 0, Inf);
 
 searchRanges._dump("searchRanges");
 col._dump("col");
