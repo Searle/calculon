@@ -111,14 +111,14 @@ console.log("_addRange error:", args, Object.prototype.toString.call(args));
             return new Ranges([ newRange ]);
         };
 
-        var crop= function(x0, y0, x1, y1) {
+        var crop= function( x0, y0, x1, y1 ) {
 
             // TODO: pruefen auf x0/y0 < 0 ? Oder macht flatten das?
 
             if ( x1 === undefined ) x1= x0;
             if ( y1 === undefined ) y1= y1;
             var newRanges= [];
-            for each (var range in ranges) {
+            for each ( var range in ranges ) {
                 var newRange= [
                     x0 + range[0],
                     y0 + range[1],
@@ -142,8 +142,14 @@ console.log("_addRange error:", args, Object.prototype.toString.call(args));
         // TODO: Naiver Code. Optimierte Variante schreiben!
         var _flatten= function () {
             var lookup= {};
+
+            // Irgendwie die Ranges merken:
+            // - Key bauen fuer alle Ranges
+
+            // Beispiel: SUMME(B:B), dann Aenderung (oder hinzufuegen von B7)
+
             var newRanges= [];
-            for each (var range in ranges) {
+            for each ( var range in ranges ) {
                 for ( var y= range[1]; y <= range[3]; y++ ) {
                     for ( var x= range[0]; x <= range[2]; x++ ) {
                         if ( x < 0 || y < 0 ) continue;
@@ -157,6 +163,47 @@ console.log("_addRange error:", args, Object.prototype.toString.call(args));
 
 
 /*
+            var yrs= {};
+            for each ( var range in ranges ) {
+                if ( yrs[range[0]] === undefined ) yrs[range[0]]= [ range[0], [], [] ];
+                yrs[range[0]][1].push(range[2]);
+                if ( yrs[range[1]] === undefined ) yrs[range[1]]= [ range[1], [], [] ];
+                yrs[range[1]][2].push(range[3]);
+            }
+
+            var yrss= [];
+            for each ( var yr in yrs ) yrss.push(yr);
+            yrss.sort(function (a, b) { return a[0] - b[0]; });
+
+            for each ( var yr in yrss ) {
+                var y= yr[0];
+                var leftx= yr[1];
+                var rightx= yr[2];
+
+                if ( leftx.length > 1 ) sort(leftx);
+                if ( rightx.length > 1 ) sort(rightx);
+
+                var l= 0, r= 0;
+                for (;;) {
+                    var x= leftx[l];
+                    while ( l < leftx.length  && leftx[l] < rightx[r] ) l++;
+                    while ( r < rightx.length && rightx[r] < leftx[l] ) r++;
+
+                }
+            }
+
+
+
+while ( y < range[1] ) {
+                    for ( var x= x0; x <= x1; x++ ) newRanges.push([x, y]);
+                    y++;
+                }
+                if ( range[0] < x0 ) x0= range[0];
+                if ( range[2] > x1 ) x1= range[2];
+            }
+
+
+
             ranges.sort(function(a, b) {
                 return b[1] - a[1] || b[0] - a[0];
             });
@@ -178,14 +225,15 @@ console.log("_addRange error:", args, Object.prototype.toString.call(args));
 
         var flatten= function () {
             if ( ranges.length === 0 ) return this;
+
             // OPTIMIERUNG TESTEN: 
             // if ( ranges.length === 1 && ranges[0][0] === ranges[0][2] && ranges[0][1] === ranges[0][3] ) return this;
             return new Ranges(_flatten());
         }
 
-        var grep= function (value) {
+        var grep= function ( value ) {
             var newRanges= [];
-            for each (var range in _flatten()) {
+            for each ( var range in _flatten() ) {
                 if ( C(range[0], range[1]).value == value ) {
                     newRanges.push(range);
                 }
