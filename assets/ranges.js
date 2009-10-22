@@ -1,4 +1,6 @@
 
+    var undefined;
+
     var cells= {};
 
     var Cell= function(x, y) {
@@ -18,11 +20,19 @@
         if ( ranges === undefined ) ranges= [];
         if ( this === window ) return new Ranges(ranges);
 
-        var isFunction= function( obj ) {
+        var _dump= function (comment) {
+            var out= [];
+            for each (var range in ranges) {
+                out.push('[' + range[0] + ',' + range[1] + ',' + range[2] + ',' + range[3] + ']');
+            }
+            console.log((comment ? comment + ': [' : '[') + out.join(', ') + ']');
+        }
+
+        var _isFunction= function( obj ) {
             return Object.prototype.toString.call(obj) === "[object Function]"
         }
 
-        var isArray= function(obj) {
+        var _isArray= function(obj) {
             return Object.prototype.toString.call(obj) === "[object Array]"
         };
 
@@ -35,7 +45,7 @@
         };
 
         var _addRange= function( ranges, args ) {
-            if ( isArray(args) ) {
+            if ( _isArray(args) ) {
                 if ( args.length === 1 ) return _addRange(ranges, args[0]);
                 if ( args.length === 2 ) {
                     var cellTL= stringToCell(args[0]);
@@ -103,12 +113,12 @@
             if ( y1 === undefined ) y1= y1;
             var newRanges= [];
             for each (var range in ranges) {
-                newRanges.push(
-                    x0 >= range[0] ? x0 : range[0],
-                    y0 >= range[1] ? y0 : range[1],
-                    x1 >= range[2] ? x1 : range[2],
-                    y1 >= range[3] ? y1 : range[3]
-                );
+                newRanges.push([
+                    (x0 >= range[0] ? x0 : range[0]),
+                    (y0 >= range[1] ? y0 : range[1]),
+                    (x1 >= range[2] ? x1 : range[2]),
+                    (y1 >= range[3] ? y1 : range[3])
+                ]);
             }
             return new Ranges(newRanges);
         };
@@ -118,7 +128,7 @@
             var newRanges= [];
             for each (var range in ranges) {
                 for ( var y= range[1]; y <= range[3]; y++ ) {
-                    for ( var x= range[1]; x <= range[2]; x++ ) {
+                    for ( var x= range[0]; x <= range[2]; x++ ) {
                         if ( lookup[x + ':' + y] ) continue;
                         newRanges.push([x, y, x, y]);
                         lookup[x + ':' + y]= 1;
@@ -164,14 +174,6 @@
             }
             return new Ranges(newRanges);
         };
-
-        var _dump= function (comment) {
-            var out= [];
-            for each (var range in ranges) {
-                out.push('[' + range[0] + ',' + range[1] + ',' + range[2] + ',' + range[3] + ']');
-            }
-            console.log((comment ? comment + ': [' : '[') + out.join(', ') + ']');
-        }
 
         this.addRange= addRange;
         this.addRanges= addRanges;
