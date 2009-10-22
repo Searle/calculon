@@ -109,18 +109,13 @@
         };
 
         var crop= function(x0, y0, x1, y1) {
-            // TODO: pruefen auf x0/y0 < 0
+
+            // TODO: pruefen auf x0/y0 < 0 ? Oder macht flatten das?
+
             if ( x1 === undefined ) x1= x0;
             if ( y1 === undefined ) y1= y1;
             var newRanges= [];
             for each (var range in ranges) {
-/*                newRanges.push([
-                    (x0 >= range[0] ? x0 : range[0]),
-                    (y0 >= range[1] ? y0 : range[1]),
-                    (x1 <= range[2] ? x1 : range[2]),
-                    (y1 <= range[3] ? y1 : range[3])
-                ]);
-*/
                 var newRange= [
                     x0 + range[0],
                     y0 + range[1],
@@ -133,13 +128,22 @@
             return new Ranges(newRanges);
         };
 
+        var ofs= function(x, y) {
+            var newRanges= [];
+            for each (var range in ranges) {
+                newRanges.push([ range[0] + x, range[1] + y, range[2] + x, range[3] + y ]);
+            }
+            return new Ranges(newRanges);
+        };
+
+        // TODO: Naiver Code. Optimierte Variante schreiben!
         var _flatten= function () {
             var lookup= {};
             var newRanges= [];
             for each (var range in ranges) {
-console.log(range)
                 for ( var y= range[1]; y <= range[3]; y++ ) {
                     for ( var x= range[0]; x <= range[2]; x++ ) {
+                        if ( x < 0 || y < 0 ) continue;
                         if ( lookup[x + ':' + y] ) continue;
                         newRanges.push([x, y, x, y]);
                         lookup[x + ':' + y]= 1;
@@ -193,6 +197,7 @@ console.log(range)
         this.crop= crop;
         this.flatten= flatten;
         this.grep= grep;
+        this.ofs= ofs;
         this._dump= _dump;
         this._ranges= ranges;
     }
