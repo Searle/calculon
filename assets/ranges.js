@@ -59,10 +59,13 @@
                 }
             }
             else if ( typeof args === 'object' && args instanceof Ranges ) {
-                for each (var r in args._ranges) _addRange(ranges, r);
+                for each (var range in args._ranges) _addRange(ranges, range);
                 return ranges;
             }
-            throw "ArgException";
+
+console.log("_addRange error:", args, Object.prototype.toString.call(args));
+
+            throw "RangeArgException:" + args;
         };
 
         var addRange= function() {
@@ -200,5 +203,9 @@
         this.ofs= ofs;
         this._dump= _dump;
         this._ranges= ranges;
+    }
+
+    R= function() {
+        return new Ranges().addRange(Array.prototype.slice.call(arguments));
     }
 

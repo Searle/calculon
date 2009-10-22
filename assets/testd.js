@@ -1,12 +1,11 @@
-var ranges= new Ranges().addRange( 'C5', 'D8' );
 
-console.log(ranges.ranges);
+// var ranges= new Ranges().addRange( 'C5', 'D8' );
 
-var newranges= ranges.addRange( 'C3', 'D4' );
+var ranges= R('C5','D8');
+ranges._dump("ranges");
 
-console.log(newranges.ranges);
-
-flat= newranges.flatten();
+var newranges= ranges.addRange('C3', 'D4');
+newranges._dump("newranges");
 
 var Inf= Number.MAX_VALUE;
 var EmptyRanges= new Ranges();
