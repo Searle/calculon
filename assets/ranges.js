@@ -22,7 +22,6 @@
         };
 
         var _addRange= function( ranges, args ) {
-console.log(ranges, args)
             if ( isArray(args) ) {
                 if ( args.length === 1 ) return _addRange(ranges, args[0]);
                 if ( args.length === 2 ) {
