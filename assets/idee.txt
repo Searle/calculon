@@ -45,7 +45,7 @@ Ranges sind gebunden an
 
 - jede Funktion merkt sich seine Umgebung
 
-grep ist abhaengig von Range
+- Atoms muessen getrackt werden wenn ein value() passiert
 
 ------------------------------------------------------------------------------
 

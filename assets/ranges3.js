@@ -6,20 +6,29 @@
         var cells= {};
 
         var Cell= function(x, y) {
-            this.value= 'Zuppi';
+
+            // x, y ?
+
+            this.value= undefined;
+            this._atomRefs= {};
         };
 
-        var getCell= function(x, y) {
+        var emptyCell= new Cell();
+
+        var _getCell= function(atomId, x, y) {
             var key= x + ':' + y;
-            if ( cells[key] === undefined ) {
-                cells[key]= new Cell(x, y);
+            var cell= cells[key];
+            if ( cell === undefined ) {
+                cell= cells[key]= new Cell(x, y);
             }
-            return cells[key];
+            cell._atomRefs[atomId]= true;
+            return cell;
         };
 
-        var _getCell= function(x, y) {
-            var key= x + ':' + y;
-            return cells[key];
+        // FIXME: Optimieren: Soll nur checken ob ein Cell existiert und nicht
+        // eins erzeugen.
+        var __getCell= function(atomId, x, y) {
+            return _getCell(atomId, x, y);
         };
 
         var _isFunction= function( obj ) {
@@ -38,38 +47,41 @@
             return [ x, y - 1 ];
         };
 
+        var _atomId= 0;
 
-        var _Ranges= function( parent ) {
+        var _Atom= function( parent ) {
 
-            this.recalcDeps= function() parent ? parent.recalcDeps() : inx
-            this.valueDeps= function()  parent ? parent.valueDeps()  : inx
+            this._atomId= _atomId++;
 
-/*
-            this.getRanges= function() []
-
-            this.value= function() {
-                var ranges= _flatten(this.getRanges());
-                if ( ranges.length === 0 ) return '#NV';
-                var cell= _getCell(ranges[0][0], ranges[0][1]);
-                return cell ? cell.value : '#EMPTY';
-            }
-*/
-
-            // this._dump= function( comment ) { _dump(this.getRanges(), comment); }
+            this.recalcDeps= function() parent ? parent.recalcDeps() : []
+            this.valueDeps= function()  parent ? parent.valueDeps()  : []
         }
 
-        _Ranges.prototype.getRanges= function () []
+        _Atom.prototype.getRanges= function () []
 
-        _Ranges.prototype.value= function() {
+        _Atom.prototype.name= ''
+
+        _Atom.prototype._getCell= function (x, y) {
+            return __getCell(this._atomId, x, y);
+        }
+
+        _Atom.prototype.getCell= function () {
+            var ranges= _flatten(this.getRanges());
+            if ( ranges.length === 0 ) return emptyCell;
+            return __getCell(this._atomId, ranges[0][0], ranges[0][1]);
+        }
+
+        _Atom.prototype.value= function() {
             var ranges= _flatten(this.getRanges());
             if ( ranges.length === 0 ) return '#NV';
-            var cell= _getCell(ranges[0][0], ranges[0][1]);
+            var cell= this._getCell(ranges[0][0], ranges[0][1]);
             return cell ? cell.value : '#EMPTY';
-        };
+        }
 
-        _Ranges.extend= function( name, protoFn, factoryFn ) {
-            _Ranges.prototype[name]= factoryFn;
-            protoFn.prototype.__proto__= _Ranges.prototype;
+        _Atom.extend= function( name, protoFn, factoryFn ) {
+            _Atom.prototype[name]= factoryFn;
+            protoFn.prototype.name= name;
+            protoFn.prototype.__proto__= _Atom.prototype;
         };
 
 // =============================================================================
@@ -77,7 +89,7 @@
 // =============================================================================
 
         var _Dump= function( parent, comment ) {
-            _Ranges.call(this, parent);
+            _Atom.call(this, parent);
 
             var _dump= function ( ranges, comment ) {
                 var out= [];
@@ -93,7 +105,7 @@
             this.getRanges= function() parent.getRanges()
         }
 
-        _Ranges.extend('dump', _Dump, function( comment ) new _Dump(this, comment));
+        _Atom.extend('dump', _Dump, function( comment ) new _Dump(this, comment));
 
 
 // =============================================================================
@@ -105,10 +117,16 @@
             if ( _isArray(arg) ) {
                 if ( arg.length === 1 ) return __addRange(ranges, arg[0]);
                 if ( arg.length === 2 ) {
-                    var cellTL= stringToCell(arg[0]);
-                    var cellBR= stringToCell(arg[1]);
-                    ranges.push([ cellTL[0], cellTL[1], cellBR[0], cellBR[1] ]);
-                    return ranges;
+                    if ( typeof arg[0] === 'string' && typeof arg[1] === 'string' ) {
+                        var cellTL= stringToCell(arg[0]);
+                        var cellBR= stringToCell(arg[1]);
+                        ranges.push([ cellTL[0], cellTL[1], cellBR[0], cellBR[1] ]);
+                        return ranges;
+                    }
+                    if ( typeof arg[0] === 'number' && typeof arg[1] === 'number' ) {
+                        ranges.push([ arg[0], arg[1], arg[0], arg[1] ]);
+                        return ranges;
+                    }
                 }
                 if ( arg.length === 4 ) {
                     ranges.push(arg);
@@ -126,7 +144,7 @@
         };
 
         var _AddRange= function( parent, arg ) {
-            _Ranges.call(this, parent);
+            _Atom.call(this, parent);
 
 // console.log(parent, ranges,arg);
 
@@ -135,7 +153,7 @@
             };
         }
 
-        _Ranges.extend('addRange', _AddRange, function() new _AddRange(this, Array.prototype.slice.call(arguments)));
+        _Atom.extend('addRange', _AddRange, function() new _AddRange(this, Array.prototype.slice.call(arguments)));
 
 
 // =============================================================================
@@ -143,7 +161,7 @@
 // =============================================================================
 
         var _AddRanges= function( parent, newRanges ) {
-            _Ranges.call(this, parent);
+            _Atom.call(this, parent);
 
             this.getRanges= function() {
                 var _ranges= parent.getRanges();
@@ -152,7 +170,7 @@
             };
         }
 
-        _Ranges.extend('addRanges', _AddRanges, function(newRanges) new _AddRanges(this, newRanges));
+        _Atom.extend('addRanges', _AddRanges, function(newRanges) new _AddRanges(this, newRanges));
 
 
 // =============================================================================
@@ -199,8 +217,8 @@
 //      Crop
 // =============================================================================
 
-        var _getCellrop= function( parent, x0, y0, x1, y1 ) {
-            _Ranges.call(this, parent);
+        var _Crop= function( parent, x0, y0, x1, y1 ) {
+            _Atom.call(this, parent);
 
             // TODO: pruefen auf x0/y0 < 0 ? Oder macht flatten das?
 
@@ -223,7 +241,7 @@
             };
         };
 
-        _Ranges.extend('crop', _getCellrop, function(x0, y0, x1, y1) new _getCellrop(this, x0, y0, x1, y1));
+        _Atom.extend('crop', _Crop, function(x0, y0, x1, y1) new _Crop(this, x0, y0, x1, y1));
 
 
 // =============================================================================
@@ -231,7 +249,7 @@
 // =============================================================================
 
         var _Ofs= function( parent, x, y ) {
-            _Ranges.call(this, parent);
+            _Atom.call(this, parent);
 
             this.getRanges= function() {
                 var ranges= [];
@@ -242,7 +260,7 @@
             };
         };
 
-        _Ranges.extend('ofs', _Ofs, function(x, y) new _Ofs(this, x,y ));
+        _Atom.extend('ofs', _Ofs, function(x, y) new _Ofs(this, x,y ));
 
         // TODO: Naiver Code. Optimierte Variante schreiben!
         var _flatten= function ( ranges ) {
@@ -311,14 +329,14 @@
 // =============================================================================
 
         var _Flatten= function ( parent ) {
-            _Ranges.call(this, parent);
+            _Atom.call(this, parent);
 
             this.getRanges= function() {
                 return _flatten(parent.getRanges());
             }
         }
 
-        _Ranges.extend('flatten', _Flatten, function() new _Flatten(this));
+        _Atom.extend('flatten', _Flatten, function() new _Flatten(this));
 
 
 // =============================================================================
@@ -326,12 +344,12 @@
 // =============================================================================
 
         var _Grep= function ( parent, value ) {
-            _Ranges.call(this, parent);
+            _Atom.call(this, parent);
 
             this.getRanges= function() {
                 var newRanges= [];
                 for each ( var range in _flatten(parent.getRanges()) ) {
-                    var cell= _getCell(range[0], range[1]);
+                    var cell= this._getCell(range[0], range[1]);
                     if ( cell !== undefined && cell.value == value ) {
                         newRanges.push(range);
                     }
@@ -340,17 +358,21 @@
             }
         };
 
-        _Ranges.extend('grep', _Grep, function(value) new _Grep(this, value));
+        _Atom.extend('grep', _Grep, function(value) new _Grep(this, value));
 
 
 // =============================================================================
-//      Interface
+//      Interface (window context)
 // =============================================================================
 
-        Ranges= function() new _Ranges;
+        Ranges= function() new _Atom;
 
-        R= function() (new _Ranges).addRange(Array.prototype.slice.call(arguments));
+        R= function() (new _Atom).addRange(Array.prototype.slice.call(arguments)).dump('addRange');
 
-        C= getCell
+        C= function (x, y) (new _Atom).addRange(x, y).getCell()
+
+        DumpCells= function () {
+            console.log(cells);
+        }
 
 })();
