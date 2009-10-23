@@ -2,10 +2,10 @@
 // var ranges= new Ranges().addRange( 'C5', 'D8' );
 
 var ranges= R('C5','D8');
-ranges._dump("ranges");
+ranges.dump("ranges");
 
 var newranges= ranges.addRange('C3', 'D4');
-newranges._dump("newranges");
+newranges.dump("newranges");
 
 var Inf= Number.MAX_VALUE;
 var EmptyRange= new Ranges();
@@ -17,15 +17,13 @@ C(4, 6).value= "HUHU!";
 C(2, 7).value= "A4";
 
 function SVERWEIS(searchRanges, value, col_i) {
-console.log( searchRanges.crop(0, 0, 0, Inf).grep(value));
+    searchRanges.dump("init").crop(0, 0, 0, Inf).dump("cropped").grep(value).dump("grepped");
+
     return searchRanges.crop(0, 0, 0, Inf).grep(value).ofs(col_i, 0);
 }
 
-sv= SVERWEIS(ranges, "Steppi", 2);
-sv._dump("sv");
-
-console.log("Ergebnis:", C(sv._ranges[0][0], sv._ranges[0][1]));
-
+console.log("Ergebnis:", SVERWEIS(ranges, "Steppi", 2) .dump("sverweis Steppi") .value() );
+console.log("Ergebnis:", SVERWEIS(ranges, "Steppi2", 2).dump("sverweis Steppi2").value() );
 
 var List= function (vals) {
 

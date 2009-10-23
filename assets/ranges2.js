@@ -1,4 +1,5 @@
 
+
     var undefined;
 
     var cells= {};
@@ -26,11 +27,11 @@
             return Object.prototype.toString.call(obj) === "[object Function]"
         }
 
-        var _isArray= function(obj) {
+        var _isArray= function( obj ) {
             return Object.prototype.toString.call(obj) === "[object Array]"
         };
 
-        var stringToCell= function(str) {
+        var stringToCell= function( str ) {
             var x= "ABCDEFGHIJKLMNOPQRSTUVWXYZ".indexOf(str.substr(0, 1));
             if ( x < 0 ) throw "NoValidCellName";
             var y= parseInt(str.substr(1), 10);
@@ -39,34 +40,47 @@
         };
 
 
-        var _Ranges= function(parent, ranges) {
+        var _Ranges= function( parent ) {
 
-            var _dump= function (comment) {
+            this.dump=      function( comment )        new _Dump(this, comment)
+            this.addRange=  function()                 new _AddRange(this, Array.prototype.slice.call(arguments))
+            this.addRanges= function( newRanges )      new _AddRanges(this, newRanges)
+            this.crop=      function( x0, y0, x1, y1 ) new _Crop(this, x0, y0, x1, y1)
+            this.ofs=       function( x, y )           new _Ofs(this, x, y)
+            this.flatten=   function()                 new _Flatten(this)
+            this.grep=      function( value )          new _Grep(this, value)
+
+            this.chainDeps= function() parent ? parent.chainDeps() : inx
+            this.valueDeps= function() parent ? parent.valueDeps() : inx
+
+            this.getRanges= function() []
+
+            this.value= function() {
+                var ranges= _flatten(this.getRanges());
+                if ( ranges.length === 0 ) return '#NV';
+                var cell= _C(ranges[0][0], ranges[0][1]);
+                return cell ? cell.value : '#EMPTY';
+            }
+
+            // this._dump= function( comment ) { _dump(this.getRanges(), comment); }
+        }
+
+        var _Dump= function( parent, comment ) {
+            _Ranges.call(this, parent);
+
+            var _dump= function ( ranges, comment ) {
                 var out= [];
                 for each ( var range in ranges ) {
                     out.push('[' + range[0] + ',' + range[1] + ',' + range[2] + ',' + range[3] + ']');
                 }
                 console.log((comment ? comment + ': [' : '[') + out.join(', ') + ']');
             }
+// console.log(parent, ranges,arg);
 
-            this.addRange=  function()                 new _AddRange(this, ranges, Array.prototype.slice.call(arguments))
-            this.addRanges= function( newRanges )      new _AddRanges(this, ranges, newRanges)
-            this.crop=      function( x0, y0, x1, y1 ) new _Crop(this, ranges, x0, y0, x1, y1)
-            this.ofs=       function( x, y )           new _Ofs(this, ranges, x, y)
-            this.flatten=   function()                 new _Flatten(this, ranges)
-            this.grep=      function( value )          new _Grep(this, ranges, value)
+            _dump(parent.getRanges(), comment );
 
-            this.chainDeps= function() parent ? parent.chainDeps() : inx;
-            this.valueDeps= function() parent ? parent.valueDeps() : inx;
-
-            this.value= function() {
-                return inx.map(function (inxv) { return vals[inxv]; })
-            }
-
-            this._dump= _dump;
-            this._ranges= ranges;
+            this.getRanges= function() parent.getRanges()
         }
-
 
         var __addRange= function( ranges, arg ) {
 
@@ -93,20 +107,24 @@
             throw "RangeArgException:" + arg;
         };
 
-        var _AddRange= function( parent, ranges, arg ) {
+        var _AddRange= function( parent, arg ) {
+            _Ranges.call(this, parent);
 
 // console.log(parent, ranges,arg);
 
-            ranges= ranges.concat();
-            __addRange(ranges, arg);
-            _Ranges.call(this, parent, ranges);
-            // this.valueDeps= function() inx
+            this.getRanges= function() {
+                return __addRange(parent.getRanges(), arg);
+            };
         }
 
-        var _AddRanges= function( parent, ranges, newRanges ) {
-            ranges= ranges.concat();
-            for each (var arg in newRanges) __addRange(ranges, arg);
-            _Ranges.call(this, parent, ranges);
+        var _AddRanges= function( parent, newRanges ) {
+            _Ranges.call(this, parent);
+
+            this.getRanges= function() {
+                var _ranges= parent.getRanges();
+                for each (var arg in newRanges) __addRange(ranges, arg);
+                return ranges;
+            };
         }
 
 /*
@@ -144,45 +162,46 @@
         };
 */
 
-// "use strict"
-
-        var _Crop= function( parent, ranges, x0, y0, x1, y1 ) {
+        var _Crop= function( parent, x0, y0, x1, y1 ) {
+            _Ranges.call(this, parent);
 
             // TODO: pruefen auf x0/y0 < 0 ? Oder macht flatten das?
 
             if ( x1 === undefined ) x1= x0;
-            if ( y1 === undefined ) y1= y1;
+            if ( y1 === undefined ) y1= y0;
 
-            var oldRanges= ranges;
-            ranges= [];
-            for each ( let [ ox0, ox1, oy0, oy1 ] in oldRanges ) {
-                var newRange= [ ox0, oy0, ox1, oy1 ]= [
-                    ox0 + x0,
-                    oy0 + y0,
-                    (ox0 + x1 <= ox1 ? ox0 + x1 : ox1),
-                    (oy0 + y1 <= oy1 ? oy0 + y1 : oy1)
-                ];
-                if ( ox0 > ox1 || oy0 > oy1 ) continue;
-                ranges.push(newRange);
-            }
-
-            _Ranges.call(this, parent, ranges);
+            this.getRanges= function() {
+                var ranges= [];
+                for each ( let [ ox0, ox1, oy0, oy1 ] in parent.getRanges() ) {
+                    var newRange= [ ox0, oy0, ox1, oy1 ]= [
+                        ox0 + x0,
+                        oy0 + y0,
+                        (ox0 + x1 <= ox1 ? ox0 + x1 : ox1),
+                        (oy0 + y1 <= oy1 ? oy0 + y1 : oy1)
+                    ];
+                    if ( ox0 > ox1 || oy0 > oy1 ) continue;
+                    ranges.push(newRange);
+                }
+                return ranges;
+            };
         };
 
-        var _Ofs= function( parent, ranges, x, y ) {
-// console.log("HU");
-            var oldRanges= ranges;
-            var ranges= [];
-            for each (var range in oldRanges) {
-                ranges.push([ range[0] + x, range[1] + y, range[2] + x, range[3] + y ]);
-            }
-            _Ranges.call(this, parent, ranges);
+        var _Ofs= function( parent, x, y ) {
+            _Ranges.call(this, parent);
+
+            this.getRanges= function() {
+                var ranges= [];
+                for each (var range in parent.getRanges()) {
+                    ranges.push([ range[0] + x, range[1] + y, range[2] + x, range[3] + y ]);
+                }
+                return ranges;
+            };
         };
 
         // TODO: Naiver Code. Optimierte Variante schreiben!
         var _flatten= function ( ranges ) {
 
-            if ( ranges.length === 0 ) return;
+            if ( ranges.length === 0 ) return ranges;
 
             // OPTIMIERUNG TESTEN: 
             // if ( ranges.length === 1 && ranges[0][0] === ranges[0][2] && ranges[0][1] === ranges[0][3] ) return this;
@@ -240,25 +259,32 @@
         };
 */
 
-        var _Flatten= function ( parent, ranges ) {
-            _Ranges.call(this, parent, _flatten(ranges));
+        var _Flatten= function ( parent ) {
+            _Ranges.call(this, parent);
+
+            this.getRanges= function() {
+                return _flatten(parent.getRanges());
+            }
         }
 
-        var _Grep= function ( parent, ranges, value ) {
-            var newRanges= [];
-            for each ( var range in _flatten(ranges) ) {
-                var cell= _C(range[0], range[1]);
-                if ( cell !== undefined && cell.value == value ) {
-                    newRanges.push(range);
+        var _Grep= function ( parent, value ) {
+            _Ranges.call(this, parent);
+
+            this.getRanges= function() {
+                var newRanges= [];
+                for each ( var range in _flatten(parent.getRanges()) ) {
+                    var cell= _C(range[0], range[1]);
+                    if ( cell !== undefined && cell.value == value ) {
+                        newRanges.push(range);
+                    }
                 }
+                return newRanges;
             }
-            _Ranges.call(this, parent, newRanges);
         };
 
-        return new _Ranges(undefined, []);
+        return new _Ranges();
     }
 
     R= function() {
         return Ranges().addRange(Array.prototype.slice.call(arguments));
     }
-
