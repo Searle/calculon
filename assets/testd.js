@@ -27,6 +27,7 @@ var test_ranges= function() {
 
         // ofs ist evt falsch, wenn sich col_i innerhalb von searchRanges befinden muss
 
+        return searchRanges.crop(0, 0, 0, Inf).grep(value)
         return searchRanges.crop(0, 0, 0, Inf).grep(value).ofs(col_i, 0)
     }
 
@@ -35,6 +36,9 @@ var test_ranges= function() {
     console.log("Ergebnis:", sv.value() )
 
     console.log("valueDeps:", sv.valueDeps())
+
+    C(2,6)._dumpRefs("2,6");
+    C(4,6)._dumpRefs("4,6");
 
     // console.log("Ergebnis:", SVERWEIS(ranges, "Steppi", 2) .dump("sverweis Steppi") .value() )
     // console.log("Ergebnis:", SVERWEIS(ranges, "Steppi2", 2).dump("sverweis Steppi2").value() )

@@ -47,6 +47,8 @@ Ranges sind gebunden an
 
 - Atoms muessen getrackt werden wenn ein value() passiert
 
+- ?: Referenzen sind immer in '', alle anderen Strings in ""
+
 ------------------------------------------------------------------------------
 
 =WENNFEHLER($I17 * SVERWEIS($A17; 

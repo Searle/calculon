@@ -32,6 +32,13 @@
             this._atomRefs= {}
         }
 
+        Cell.prototype._dumpRefs= function ( comment ) {
+            for ( var atomId in this._atomRefs ) {
+                console.log(comment + ':', atoms[atomId])
+                atoms[atomId].dump(comment)
+            }
+        }
+
         var emptyCell= new Cell()
 
         var _getCell= function(atomId, x, y) {
@@ -70,7 +77,12 @@
 
         var _Atom= function( parent ) {
 
-            this._atomId= _atomId++
+            this._atomId= ++_atomId
+
+            // Garbage collection horror
+            atoms[this._atomId]= this
+
+            console.log('New atom:', this._atomId, this.name, parent ? '(parent:' + parent.name + ')' : '')
 
             // Diese Methoden koennen nicht in den prototype, da es Closures sind
             this.recalcDeps= function() parent ? parent.recalcDeps() : []
