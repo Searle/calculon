@@ -1,5 +1,4 @@
 
-/*
 // var ranges= new Ranges().addRange( 'C5', 'D8' );
 
 var ranges= R('C5','D8');
@@ -18,6 +17,7 @@ C(4, 6).value= "HUHU!";
 C(2, 7).value= "A4";
 
 function SVERWEIS(searchRanges, value, col_i) {
+console.log( searchRanges.crop(0, 0, 0, Inf).grep(value));
     return searchRanges.crop(0, 0, 0, Inf).grep(value).ofs(col_i, 0);
 }
 
@@ -25,7 +25,6 @@ sv= SVERWEIS(ranges, "Steppi", 2);
 sv._dump("sv");
 
 console.log("Ergebnis:", C(sv._ranges[0][0], sv._ranges[0][1]));
-*/
 
 
 var List= function (vals) {
@@ -88,3 +87,6 @@ console.log("RECALC IN CHANGES IN:", cell.chainDeps());
 console.log("CIRCULAR REFS IF:", cell.valueDeps());
 console.log("RESULT:", cell.value());
 
+let x= 1;
+var ar= [ [ 1, 2], [3, 4], [5, 6] ];
+for each ( let [x, y] in ar ) console.log("let test:", x, y);
