@@ -26,16 +26,29 @@
 
         var Cell= function(x, y) {
 
-            // x, y ?
+            this._x= x
+            this._y= y
 
-            this.value= undefined
+            this._value= undefined
             this._atomRefs= {}
+        }
+
+        Cell.prototype.getValue= function( atomId ) {
+            this._atomRefs[atomId]= true
+
+console.log("Cell.getValue", atomId, this._x, this._y, this._value);
+
+            return this._value;
+        }
+
+        Cell.prototype.setValue= function( value ) {
+            this._value= value;
         }
 
         Cell.prototype._dumpRefs= function ( comment ) {
             for ( var atomId in this._atomRefs ) {
-                console.log(comment + ':', atoms[atomId])
-                atoms[atomId].dump(comment)
+                console.log('dumpRef', comment + ':', atoms[atomId])
+                atoms[atomId].dump('dumpRef ' + comment)
             }
         }
 
@@ -47,7 +60,6 @@
             if ( cell === undefined ) {
                 cell= cells[key]= new Cell(x, y)
             }
-            cell._atomRefs[atomId]= true
             return cell
         }
 
@@ -82,14 +94,16 @@
             // Garbage collection horror
             atoms[this._atomId]= this
 
-            console.log('New atom:', this._atomId, this.name, parent ? '(parent:' + parent.name + ')' : '')
+            console.log('New atom:', this._atomId, this.name, parent ? '(parent:' + parent._atomId + ' ' + parent.name + ')' : '')
 
             // Diese Methoden koennen nicht in den prototype, da es Closures sind
             this.recalcDeps= function() parent ? parent.recalcDeps() : []
-            this.valueDeps= function()  parent ? parent.valueDeps()  : []
+            this._valueDeps= function()  parent ? parent._valueDeps()  : []
         }
 
         _Atom.prototype.getRanges= function () []
+
+        _Atom.prototype.valueDeps= function () _flatten(this._valueDeps())
 
         _Atom.prototype.name= ''
 
@@ -107,7 +121,7 @@
             var ranges= _flatten(this.getRanges())
             if ( ranges.length === 0 ) return '#NV'
             var cell= this._getCell(ranges[0][0], ranges[0][1])
-            return cell ? cell.value : '#EMPTY'
+            return cell ? cell.getValue(this._atomId) : '#EMPTY'
         }
 
         _Atom.extend= function( name, protoFn, factoryFn ) {
@@ -382,12 +396,14 @@
                 var newRanges= []
                 for each ( var range in _flatten(parent.getRanges()) ) {
                     var cell= this._getCell(range[0], range[1])
-                    if ( cell !== undefined && cell.value == value ) {
+                    if ( cell !== undefined && cell.getValue(this._atomId) == value ) {
                         newRanges.push(range)
                     }
                 }
                 return newRanges
             }
+
+            this._valueDeps= function() parent.getRanges()
         }
 
         _Atom.extend('grep', _Grep, function(value) new _Grep(this, value))

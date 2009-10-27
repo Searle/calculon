@@ -11,13 +11,13 @@ var test_ranges= function() {
     var Inf= Number.MAX_VALUE
     var EmptyRange= new Ranges()
 
-    C(2, 4).value= "C5"
-    C(2, 5).value= "C6"
-    C(2, 6).value= "Steppi"
-    C(4, 6).value= "HUHU!"
-    C(2, 7).value= "C8"
+    C(2, 4).setValue("C5")
+    C(2, 5).setValue("C6")
+    C(2, 6).setValue("Steppi")
+    C(4, 6).setValue("HUHU!")
+    C(2, 7).setValue("C8")
 
-    DumpCells()
+//    DumpCells()
 
     function SVERWEIS(searchRanges, value, col_i) {
         // var sv= searchRanges.dump("init").crop(0, 0, 0, Inf).dump("cropped").grep(value).ofs(col_i, 0)
@@ -27,11 +27,11 @@ var test_ranges= function() {
 
         // ofs ist evt falsch, wenn sich col_i innerhalb von searchRanges befinden muss
 
-        return searchRanges.crop(0, 0, 0, Inf).grep(value)
+        // return searchRanges.crop(0, 0, 0, Inf).grep(value)
         return searchRanges.crop(0, 0, 0, Inf).grep(value).ofs(col_i, 0)
     }
 
-    var sv= SVERWEIS(newranges, "Steppi", 2) .dump("sverweis Steppi")
+    var sv= SVERWEIS(newranges, "Steppi", 2).dump("sverweis Steppi")
 
     console.log("Ergebnis:", sv.value() )
 
