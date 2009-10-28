@@ -24,7 +24,11 @@
 
         var cells= {}
 
+//        var cellId= 0
+
         var Cell= function(x, y) {
+
+//            this._cellId= ++cellId;
 
             this._x= x
             this._y= y
@@ -52,8 +56,13 @@ console.log("Cell.getValue", atomId, this._x, this._y, this._value);
             }
         }
 
+        Cell.prototype.getKey= function() {
+            return this._x + ':' + this._y
+        }
+
         var emptyCell= new Cell()
 
+        // FIXME: atomId unused
         var _getCell= function(atomId, x, y) {
             var key= x + ':' + y
             var cell= cells[key]
@@ -65,6 +74,7 @@ console.log("Cell.getValue", atomId, this._x, this._y, this._value);
 
         // FIXME: Optimieren: Soll nur checken ob ein Cell existiert und nicht
         // eins erzeugen.
+        // FIXME: atomId unused
         var __getCell= function(atomId, x, y) {
             return _getCell(atomId, x, y)
         }
@@ -98,7 +108,22 @@ console.log("Cell.getValue", atomId, this._x, this._y, this._value);
 
             // Diese Methoden koennen nicht in den prototype, da es Closures sind
             this.recalcDeps= function() parent ? parent.recalcDeps() : []
-            this._valueDeps= function()  parent ? parent._valueDeps()  : []
+            this._valueDeps= function() parent ? parent._valueDeps() : []
+
+            this._cellRefs= {}
+
+            this.__cellRefs= function() {
+                var refs= parent ? parent.__cellRefs() : {}
+                for ( var ref in this._cellRefs ) refs[ref]= true;
+                return refs
+            }
+
+            this.cellRefs= function() {
+                var refs= this.__cellRefs();
+                var result= [];
+                for ( var ref in refs ) result.push(cells[ref]);
+                return result;
+            }
         }
 
         _Atom.prototype.getRanges= function () []
@@ -106,22 +131,45 @@ console.log("Cell.getValue", atomId, this._x, this._y, this._value);
         _Atom.prototype.valueDeps= function () _flatten(this._valueDeps())
 
         _Atom.prototype.name= ''
+        _Atom.prototype.flattened= undefined
+
+        _Atom.prototype.getFlattenedRanges= function () {
+            if ( this.flattened === undefined ) {
+                this.flattened= _flatten(this.getRanges())
+            }
+            return this.flattened
+        }
 
         _Atom.prototype._getCell= function (x, y) {
             return __getCell(this._atomId, x, y)
         }
 
         _Atom.prototype.getCell= function () {
-            var ranges= _flatten(this.getRanges())
+            var ranges= this.getFlattenedRanges()
             if ( ranges.length === 0 ) return emptyCell
             return __getCell(this._atomId, ranges[0][0], ranges[0][1])
         }
 
         _Atom.prototype.value= function() {
-            var ranges= _flatten(this.getRanges())
+            var ranges= this.getFlattenedRanges()
             if ( ranges.length === 0 ) return '#NV'
+
             var cell= this._getCell(ranges[0][0], ranges[0][1])
-            return cell ? cell.getValue(this._atomId) : '#EMPTY'
+
+            // if ( !cell ) return '#EMPTY'
+            if ( !cell ) return; // undefined
+
+            this._cellRefs[cell.getKey()]= true;
+            return cell.getValue(this._atomId);
+        }
+
+        _Atom.prototype._rangeValue= function(range) {
+
+            var cell= this._getCell(range[0], range[1])
+            if ( !cell ) return; // undefined
+
+            this._cellRefs[cell.getKey()]= true;
+            return cell.getValue(this._atomId);
         }
 
         _Atom.extend= function( name, protoFn, factoryFn ) {
@@ -394,9 +442,9 @@ console.log("Cell.getValue", atomId, this._x, this._y, this._value);
 
             this.getRanges= function() {
                 var newRanges= []
-                for each ( var range in _flatten(parent.getRanges()) ) {
-                    var cell= this._getCell(range[0], range[1])
-                    if ( cell !== undefined && cell.getValue(this._atomId) == value ) {
+                for each ( var range in parent.getFlattenedRanges() ) {
+                    var cellValue= parent._rangeValue(range)
+                    if ( cellValue !== undefined && cellValue == value ) {
                         newRanges.push(range)
                     }
                 }
