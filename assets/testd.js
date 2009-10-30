@@ -11,15 +11,19 @@ var test_ranges= function() {
     var Inf= Number.MAX_VALUE
     var EmptyRange= new Ranges()
 
-    C(2, 4).setValue("C5")
-    C(2, 5).setValue("C6")
-    C(2, 6).setValue("Steppi")
-    C(4, 6).setValue("HUHU!")
-    C(2, 7).setValue("C8")
+            C('C5').setValue("C5")
+
+    var C6= C('C6').setValue("C6")
+            C('E6').setValue("Zuppi")
+
+            C('C7').setValue("Steppi")
+            C('E7').setValue("HUHU!")
+
+            C('C8').setValue("C8")
 
 //    DumpCells()
 
-    function SVERWEIS(searchRanges, value, col_i) {
+    var SVERWEIS= function ( searchRanges, value, col_i ) {
         // var sv= searchRanges.dump("init").crop(0, 0, 0, Inf).dump("cropped").grep(value).ofs(col_i, 0)
         // sv= sv.grep(value)          // geht???
         // sv= sv.dump("grepped")      // geht nicht??? oder jetzt doch? hmm
@@ -28,19 +32,33 @@ var test_ranges= function() {
         // ofs ist evt falsch, wenn sich col_i innerhalb von searchRanges befinden muss
 
         // return searchRanges.crop(0, 0, 0, Inf).grep(value)
+        GREP= searchRanges.crop(0, 0, 0, Inf).grep(value);
+        return GREP.ofs(col_i, 0)
+
         return searchRanges.crop(0, 0, 0, Inf).grep(value).ofs(col_i, 0)
     }
 
     var sv= SVERWEIS(newranges, "Steppi", 2); // .dump("sverweis Steppi")
 
-    console.log("Ergebnis:", sv.value() )
+    console.log("SV Ergebnis:", sv.getValue() )
 
-    console.log("valueDeps:", sv.valueDeps())
+    console.log("SV valueDeps:", sv.valueDeps())
 
-    console.log("cellRefs:", sv.cellRefs())
+    console.log("SV cellRefs:", sv.cellRefs())
 
-    C(2,6)._dumpRefs("2,6");
-    C(4,6)._dumpRefs("4,6");
+//    C(2, 6)._dumpRefs("2,6");
+//    C(4, 6)._dumpRefs("4,6");
+
+    console.log("GREP valueDeps:", GREP.valueDeps())
+    console.log("C6 valueDeps:", C6.valueDeps())
+
+    // sv.value aendern. jetzt muss grep neu gemacht werden
+    C6
+        ._dumpCellRefs("Refs C6")
+        .dirty()
+        .setValue("Steppi")
+
+    console.log("Ergebnis:", sv.getValue() )
 
     // console.log("Ergebnis:", SVERWEIS(ranges, "Steppi", 2) .dump("sverweis Steppi") .value() )
     // console.log("Ergebnis:", SVERWEIS(ranges, "Steppi2", 2).dump("sverweis Steppi2").value() )
