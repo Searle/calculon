@@ -249,6 +249,10 @@ console.log("DIRTY", range, atomId);
 
         var __addRange= function( ranges, arg ) {
 
+            // Understands:
+            // - [ Something ]
+            // - [ 'A1', 'B2' ]
+            // - [ 2, 3 ]
             if ( _isArray(arg) ) {
                 if ( arg.length === 1 ) return __addRange(ranges, arg[0])
                 if ( arg.length === 2 ) {
@@ -268,13 +272,20 @@ console.log("DIRTY", range, atomId);
                     return ranges
                 }
             }
+
+            // Understands:
+            // - 'A1'
             else if ( typeof arg === 'string' ) {
                 var cellRange= stringToCell(arg)
                 ranges.push([ cellRange[0], cellRange[1], cellRange[0], cellRange[1] ])
                 return ranges
             }
-            else if ( arg instanceof Ranges ) {
-                for each ( var range in arg._ranges ) __addRange(ranges, range)
+
+            // Understands:
+            // - new Atom().chainedFn() ...
+            // NEEDS TESTING!
+            else if ( arg instanceof _Atom ) {
+                for each ( var range in arg.getRanges() ) __addRange(ranges, range)
                 return ranges
             }
 
@@ -509,8 +520,7 @@ console.log("DIRTY", range, atomId);
 
         Ranges= function() new _Atom
 
-        R= function () (new _Atom).addRange(Array.prototype.slice.call(arguments)).dump('addRange')
-
+        // R= function () (new _Atom).addRange(Array.prototype.slice.call(arguments)).dump('addRange')
         // C= function (x, y) (new _Atom).addRange(x, y)
 
         C= function () (new _Atom).addRange(Array.prototype.slice.call(arguments))

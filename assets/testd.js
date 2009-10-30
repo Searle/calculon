@@ -2,7 +2,7 @@
 var test_ranges= function() {
     // var ranges= new Ranges().addRange( 'C5', 'D8' )
 
-    var ranges= R('C5','D8')
+    var ranges= C('C5','D8')
     ranges.dump("ranges")
 
     var newranges= ranges.addRange('C3', 'D4')
