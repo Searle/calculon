@@ -17,6 +17,76 @@
             return Object.prototype.toString.call(obj) === "[object Array]"
         }
 
+        if ( V === undefined ) V= function (value) value
+
+        // -----------------------------------------------------------------------------
+        //      _flatten
+        // -----------------------------------------------------------------------------
+
+        // TODO: Naiver Code. Optimierte Variante schreiben!
+        var _flatten= function ( ranges ) {
+
+            if ( ranges.length === 0 ) return ranges
+
+console.log("_flatten", V(ranges))
+
+            // OPTIMIERUNG TESTEN: 
+            if ( ranges.length === 1 && ranges[0][0] === ranges[0][2] && ranges[0][1] === ranges[0][3] ) return ranges
+
+console.log("_flatten: slow")
+
+            var lookup= {}
+
+            // Irgendwie die Ranges merken:
+            // - Key bauen fuer alle Ranges
+
+            // Beispiel: SUMME(B:B), dann Aenderung (oder hinzufuegen von B7)
+
+            var newRanges= []
+            for each ( var range in ranges ) {
+                for ( var y= range[1]; y <= range[3]; y++ ) {
+                    for ( var x= range[0]; x <= range[2]; x++ ) {
+                        if ( x < 0 || y < 0 ) continue
+                        if ( lookup[x + ':' + y] ) continue
+                        newRanges.push([x, y, x, y])
+                        lookup[x + ':' + y]= 1
+                    }
+                }
+            }
+            return newRanges
+        }
+
+/*
+            var yrs= {}
+            for each ( var range in ranges ) {
+                if ( yrs[range[0]] === undefined ) yrs[range[0]]= [ range[0], [], [] ]
+                yrs[range[0]][1].push(range[2])
+                if ( yrs[range[1]] === undefined ) yrs[range[1]]= [ range[1], [], [] ]
+                yrs[range[1]][2].push(range[3])
+            }
+
+            var yrss= []
+            for each ( var yr in yrs ) yrss.push(yr)
+            yrss.sort(function (a, b) { return a[0] - b[0] })
+
+            for each ( var yr in yrss ) {
+                var y= yr[0]
+                var leftx= yr[1]
+                var rightx= yr[2]
+
+                if ( leftx.length > 1 ) sort(leftx)
+                if ( rightx.length > 1 ) sort(rightx)
+
+                var l= 0, r= 0
+                for (;;) {
+                    var x= leftx[l]
+                    while ( l < leftx.length  && leftx[l] < rightx[r] ) l++
+                    while ( r < rightx.length && rightx[r] < leftx[l] ) r++
+                    ...
+                }
+            }
+        }
+*/
 
 // =============================================================================
 //      Cell
@@ -46,7 +116,19 @@ console.log("Cell.getValue", atomId, this._x, this._y, this._value);
         }
 
         Cell.prototype.setValue= function( value ) {
-            this._value= value;
+
+            if ( value instanceof _Atom ) {
+
+                this._value= value;
+                return
+            }
+
+            if ( typeof value === 'string' ) {
+                this._value= value;
+                return
+            }
+
+            throw "CellValueType " + value
         }
 
         Cell.prototype._dumpRefs= function ( comment ) {
@@ -175,6 +257,8 @@ console.log("Cell.getValue", atomId, this._x, this._y, this._value);
                 return false
             }
 
+            if ( this._parent === undefined ) return []
+
             _doFlatten(this)
 
             return this.__flattened
@@ -186,12 +270,12 @@ console.log("Cell.getValue", atomId, this._x, this._y, this._value);
             _Atom.dirties[this._atomId]= true
             for each ( var range in this.getFlattenedRanges() ) {
 
-console.log("DIRTY", this._atomId, range);
+console.log("DIRTY", this._atomId, V(range));
 
                 var cell= this._getCell(range[0], range[1])
                 for ( var atomId in cell._atomRefs ) {
 
-console.log("DIRTY", this._atomId, range, atomId);
+console.log("DIRTY", this._atomId, V(range), atomId);
 
                     _Atom.dirties[atomId]= true
 
@@ -214,17 +298,17 @@ console.log("DIRTY", this._atomId, range, atomId);
 
         _Atom.prototype.getValue= function() {
 
-console.log("DIRTIES", _Atom.dirties);
+console.log("DIRTIES", V(_Atom.dirties));
 
             var ranges= this.getFlattenedRanges()
-            if ( ranges.length === 0 ) return '#NV'
+            if ( ranges.length === 0 ) return // undefined
 
-console.log("DIRTIES ranges", ranges);
+console.log("DIRTIES ranges", V(ranges));
 
             var cell= this._getCell(ranges[0][0], ranges[0][1])
 
             // if ( !cell ) return '#EMPTY'
-            if ( !cell ) return; // undefined
+            if ( !cell ) return // undefined
 
             this._cellRefs[cell.getKey()]= true;
             return cell.getValue(this._atomId);
@@ -449,68 +533,6 @@ console.log("DIRTIES ranges", ranges);
 
         _Atom.extend('ofs', _Ofs, function(x, y) new _Ofs(this, x,y ))
 
-        // TODO: Naiver Code. Optimierte Variante schreiben!
-        var _flatten= function ( ranges ) {
-
-            if ( ranges.length === 0 ) return ranges
-
-            // OPTIMIERUNG TESTEN: 
-            // if ( ranges.length === 1 && ranges[0][0] === ranges[0][2] && ranges[0][1] === ranges[0][3] ) return this
-
-            var lookup= {}
-
-            // Irgendwie die Ranges merken:
-            // - Key bauen fuer alle Ranges
-
-            // Beispiel: SUMME(B:B), dann Aenderung (oder hinzufuegen von B7)
-
-            var newRanges= []
-            for each ( var range in ranges ) {
-                for ( var y= range[1]; y <= range[3]; y++ ) {
-                    for ( var x= range[0]; x <= range[2]; x++ ) {
-                        if ( x < 0 || y < 0 ) continue
-                        if ( lookup[x + ':' + y] ) continue
-                        newRanges.push([x, y, x, y])
-                        lookup[x + ':' + y]= 1
-                    }
-                }
-            }
-            return newRanges
-        }
-
-/*
-            var yrs= {}
-            for each ( var range in ranges ) {
-                if ( yrs[range[0]] === undefined ) yrs[range[0]]= [ range[0], [], [] ]
-                yrs[range[0]][1].push(range[2])
-                if ( yrs[range[1]] === undefined ) yrs[range[1]]= [ range[1], [], [] ]
-                yrs[range[1]][2].push(range[3])
-            }
-
-            var yrss= []
-            for each ( var yr in yrs ) yrss.push(yr)
-            yrss.sort(function (a, b) { return a[0] - b[0] })
-
-            for each ( var yr in yrss ) {
-                var y= yr[0]
-                var leftx= yr[1]
-                var rightx= yr[2]
-
-                if ( leftx.length > 1 ) sort(leftx)
-                if ( rightx.length > 1 ) sort(rightx)
-
-                var l= 0, r= 0
-                for (;;) {
-                    var x= leftx[l]
-                    while ( l < leftx.length  && leftx[l] < rightx[r] ) l++
-                    while ( r < rightx.length && rightx[r] < leftx[l] ) r++
-                    ...
-                }
-            }
-        }
-*/
-
-
 // =============================================================================
 //      Flatten extends _Atom
 //      NEEDED?
@@ -562,5 +584,7 @@ console.log("DIRTIES ranges", ranges);
         DumpCells= function () {
             console.log(cells)
         }
+
+        A= function (i) atoms[i]
 
 })()

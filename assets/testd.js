@@ -40,17 +40,19 @@ var test_ranges= function() {
 
     var sv= SVERWEIS(newranges, "Steppi", 2); // .dump("sverweis Steppi")
 
+            C('H1').setValue(C6)
+
     console.log("SV Ergebnis:", sv.getValue() )
 
-    console.log("SV valueDeps:", sv.valueDeps())
+    console.log("SV valueDeps:", V(sv.valueDeps()))
 
-    console.log("SV cellRefs:", sv.cellRefs())
+    console.log("SV cellRefs:", V(sv.cellRefs()))
 
 //    C(2, 6)._dumpRefs("2,6");
 //    C(4, 6)._dumpRefs("4,6");
 
-    console.log("GREP valueDeps:", GREP.valueDeps())
-    console.log("C6 valueDeps:", C6.valueDeps())
+    console.log("GREP valueDeps:", V(GREP.valueDeps()))
+    console.log("C6 valueDeps:", V(C6.valueDeps()))
 
     // sv.value aendern. jetzt muss grep neu gemacht werden
     C6
@@ -58,6 +60,7 @@ var test_ranges= function() {
         .dirty()
         .setValue("Steppi")
 
+    console.log("Ergebnis:", sv.getValue() )
     console.log("Ergebnis:", sv.getValue() )
 
     // console.log("Ergebnis:", SVERWEIS(ranges, "Steppi", 2) .dump("sverweis Steppi") .value() )
