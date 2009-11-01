@@ -17,7 +17,35 @@
             return Object.prototype.toString.call(obj) === "[object Array]"
         }
 
-        if ( V === undefined ) V= function (value) value
+        if ( typeof Rd === 'undefined' ) Rd= function (value) value
+
+
+        // -----------------------------------------------------------------------------
+        //      Cell/Ranges String functions
+        // -----------------------------------------------------------------------------
+
+        // FIXME: Naive Implementierung, kann kein AA1 etc
+        var stringToCell= function( str ) {
+            var x= "@ABCDEFGHIJKLMNOPQRSTUVWXYZ".indexOf(str.substr(0, 1))
+            if ( x < 0 ) throw "NoValidCellName"
+            var y= parseInt(str.substr(1), 10)
+            if ( isNaN(y) || y <= 0 ) throw "NoValidCellName: [" + str + "]"
+            return [ x, y ]
+        }
+
+        var rangesToString= function( ranges ) {
+
+            var cellToString= function( x, y ) "@ABCDEFGHIJKLMNOPQRSTUVWXYZ".substr(x, 1) + y
+
+            var result= [];
+            for each ( range in ranges ) {
+                var cstr1= cellToString(range[0], range[1])
+                var cstr2= cellToString(range[0], range[1])
+                result.push(cstr1 == cstr2 ? cstr1 : cstr1 + ':' + cstr2)
+            }
+            return '[' + result.join(';') + ']'
+        }
+
 
         // -----------------------------------------------------------------------------
         //      _flatten
@@ -28,7 +56,7 @@
 
             if ( ranges.length === 0 ) return ranges
 
-console.log("_flatten", V(ranges))
+console.log("_flatten", rangesToString(ranges))
 
             // OPTIMIERUNG TESTEN: 
             if ( ranges.length === 1 && ranges[0][0] === ranges[0][2] && ranges[0][1] === ranges[0][3] ) return ranges
@@ -143,9 +171,6 @@ console.log("Variant.getValue", this._variantId, atomId, '=', this._value);
         Variant.prototype._dumpRefs= function ( comment ) {
             for ( var atomId in this._atomRefs ) {
                 console.log('variantDumpRef', comment + ':', atoms[atomId])
-
-console.log("atomId", atomId)
-
                 atoms[atomId].dump('variantDumpRef ' + comment)
             }
         }
@@ -183,6 +208,7 @@ console.log("atomId", atomId)
         }
 
         Cell.prototype.setValue= function( atomId, value ) {
+            if ( this._variant !== undefined ) this._variant.dirty()
             this._variant= new Variant(atomId, value)
         }
 
@@ -202,6 +228,11 @@ console.log("atomId", atomId)
             this._variant.dirty()
         }
 
+        Cell.prototype.getAtomRefs= function( atomId, value ) {
+            if ( this._variant === undefined ) return []
+            return this._variant._atomRefs
+        }
+
 //        var emptyCell= new Cell()
 
         var _getCell= function(x, y) {
@@ -217,16 +248,6 @@ console.log("atomId", atomId)
             var key= x + ':' + y
             return cells[key]
         }
-
-        // FIXME: Naive Implementierung, kann kein AA1 etc
-        var stringToCell= function( str ) {
-            var x= "@ABCDEFGHIJKLMNOPQRSTUVWXYZ".indexOf(str.substr(0, 1))
-            if ( x < 0 ) throw "NoValidCellName"
-            var y= parseInt(str.substr(1), 10)
-            if ( isNaN(y) || y <= 0 ) throw "NoValidCellName: [" + str + "]"
-            return [ x, y ]
-        }
-
 
 // =============================================================================
 //      Atom
@@ -289,9 +310,12 @@ console.log("atomId", atomId)
             return result;
         }
 
+        // _Atom.prototype.toString= function(a,b) "KJHKJHKJH"
+
         _Atom.prototype.getRanges= function() []
 
         _Atom.prototype.valueDeps= function() _flatten(this._valueDeps())
+        _Atom.prototype.valueDepsAsString= function() rangesToString(this.valueDeps())
 
         _Atom.prototype.name= ''
         _Atom.prototype.__flattened= undefined
@@ -328,14 +352,14 @@ console.log("atomId", atomId)
             _Atom.dirties[this._atomId]= true
             for each ( var range in this.getFlattenedRanges() ) {
 
-console.log("DIRTY", this._atomId, V(range));
+console.log("DIRTY", this._atomId, rangesToString([range]))
 
                 var cell= __getCell(range[0], range[1])
                 if ( cell === undefined ) continue
 
-                for ( var atomId in cell._atomRefs ) {
+                for ( var atomId in cell.getAtomRefs() ) {
 
-console.log("DIRTY", this._atomId, V(range), atomId);
+console.log("DIRTY", this._atomId, rangesToString([range]), atomId);
 
                     _Atom.dirties[atomId]= true
 
@@ -354,12 +378,12 @@ console.log("DIRTY", this._atomId, V(range), atomId);
 
         _Atom.prototype.getValue= function() {
 
-console.log("DIRTIES", V(_Atom.dirties));
+console.log("DIRTIES", Rd(_Atom.dirties));
 
             var ranges= this.getFlattenedRanges()
             if ( ranges.length === 0 ) return // undefined
 
-console.log("DIRTIES ranges", V(ranges));
+console.log("DIRTIES ranges", rangesToString(ranges));
 
             var cell= __getCell(ranges[0][0], ranges[0][1])
 
@@ -404,16 +428,7 @@ console.log("DIRTIES ranges", V(ranges));
         var _Dump= function( parent, comment ) {
             _Atom.call(this, parent)
 
-            var _dump= function( ranges, comment ) {
-                var out= []
-                for each ( var range in ranges ) {
-                    out.push('[' + range[0] + ',' + range[1] + ',' + range[2] + ',' + range[3] + ']')
-                }
-                console.log((comment ? comment + ': [' : '[') + out.join(', ') + ']')
-            }
-// console.log(parent, ranges,arg)
-
-            _dump(parent.getRanges(), comment )
+            console.log((comment ? comment + ': ' : '') + rangesToString(parent.getRanges()))
 
             this.getRanges= function() parent.getRanges()
         }
@@ -636,13 +651,18 @@ console.log("DIRTIES ranges", V(ranges));
 //      Interface (window context)
 // =============================================================================
 
-        Ranges= function() new _Atom
+        // Ranges= function() new _Atom
 
-        C= function () (new _Atom).addRange(Array.prototype.slice.call(arguments))
+        var root= new _Atom
+
+        C= function () root.addRange(Array.prototype.slice.call(arguments))
 
         DumpCells= function () {
             console.log(cells)
         }
+
+        V= function () new _Atom
+        V1= function () (new _Atom).addRange( 1, 1, 1, 1 )
 
         A= function (i) atoms[i]
 
