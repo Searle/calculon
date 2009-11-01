@@ -40,19 +40,15 @@ var test_ranges= function() {
 
     var sv= SVERWEIS(newranges, "Steppi", 2); // .dump("sverweis Steppi")
 
-            C('H1').setValue(C6)
+    console.warn("SV Ergebnis:", sv.getValue() )
 
-    console.log("SV Ergebnis:", sv.getValue() )
-
-    console.log("SV valueDeps:", V(sv.valueDeps()))
-
-    console.log("SV cellRefs:", V(sv.cellRefs()))
-
+//    console.log("SV valueDeps:", V(sv.valueDeps()))
+//    console.log("SV cellRefs:", V(sv.cellRefs()))
 //    C(2, 6)._dumpRefs("2,6");
 //    C(4, 6)._dumpRefs("4,6");
 
-    console.log("GREP valueDeps:", V(GREP.valueDeps()))
-    console.log("C6 valueDeps:", V(C6.valueDeps()))
+    console.warn("GREP valueDeps:", V(GREP.valueDeps()))
+    console.warn("C6 valueDeps:", V(C6.valueDeps()))
 
     // sv.value aendern. jetzt muss grep neu gemacht werden
     C6
@@ -60,8 +56,20 @@ var test_ranges= function() {
         .dirty()
         .setValue("Steppi")
 
-    console.log("Ergebnis:", sv.getValue() )
-    console.log("Ergebnis:", sv.getValue() )
+    console.warn("SV Ergebnis:", sv.getValue() )
+    console.warn("SV Ergebnis:", sv.getValue() )
+
+            C('H1').setValue(6)
+            C('H2').setValue(17)
+
+    // H1 + H2
+
+            C('H3').setValue(0)
+
+
+    console.warn("H1 Ergebnis:", C('H1').getValue() )
+    console.warn("H2 Ergebnis:", C('H2').getValue() )
+    console.warn("H3 Ergebnis:", C('H3').getValue() )
 
     // console.log("Ergebnis:", SVERWEIS(ranges, "Steppi", 2) .dump("sverweis Steppi") .value() )
     // console.log("Ergebnis:", SVERWEIS(ranges, "Steppi2", 2).dump("sverweis Steppi2").value() )
