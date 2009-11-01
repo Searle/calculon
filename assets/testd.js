@@ -62,15 +62,16 @@ var test_ranges= function() {
 
     // H1 + H2
 
-            C('H3').setValue(0)
+            C('H3').setValue(C('H1').add(C('H2')).add(V(5)))
 
     console.warn("H1 Ergebnis:", C('H1').getValue() )
     console.warn("H2 Ergebnis:", C('H2').getValue() )
     console.warn("H3 Ergebnis:", C('H3').getValue() )
 
-    var cv= V(8);
-
-    console.warn("H3 Ergebnis:", cv.getValue() )
+    var V8= V(8)
+    var cv= V8.setValue(10).add(13);
+    var cv2= V8.setValue(20)
+    console.warn("cv Ergebnis:", cv.getValue() )
 
     // console.log("Ergebnis:", SVERWEIS(ranges, "Steppi", 2) .dump("sverweis Steppi") .value() )
     // console.log("Ergebnis:", SVERWEIS(ranges, "Steppi2", 2).dump("sverweis Steppi2").value() )
