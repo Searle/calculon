@@ -5,6 +5,8 @@ var test_ranges4= function() {
 
     console.warn(ranges.getValue());
 
+    var v= C('C5', 'C6').XsetValue(5).addRange('C7', 'C8').Xadd(1)
+    console.log(v.getValues());
 }
 
 var test_ranges= function() {
