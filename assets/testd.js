@@ -60,7 +60,9 @@ var test_ranges= function() {
             C('H1').setValue(6)
             C('H2').setValue(17)
 
-    // H1 + H2
+    // H3 = H1 + H2 + 5
+
+    // Fehler: "add" ist deklarativ
 
             C('H3').setValue(C('H1').add(C('H2')).add(V(5)))
 
@@ -75,6 +77,15 @@ var test_ranges= function() {
 
     // console.log("Ergebnis:", SVERWEIS(ranges, "Steppi", 2) .dump("sverweis Steppi") .value() )
     // console.log("Ergebnis:", SVERWEIS(ranges, "Steppi2", 2).dump("sverweis Steppi2").value() )
+
+/*
+    A1= 1
+    A2= 2
+    B1= Cell(A1, A2)
+    B2= 3
+
+    B1.getValue()
+*/
 
 }
 

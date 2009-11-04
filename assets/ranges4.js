@@ -63,13 +63,27 @@ console.log("_flatten:", rangesToString(ranges))
 
 console.log("_flatten using slow")
 
-            var lookup= {}
-
             // Irgendwie die Ranges merken:
             // - Key bauen fuer alle Ranges
 
             // Beispiel: SUMME(B:B), dann Aenderung (oder hinzufuegen von B7)
 
+            // Gibt jetzt nen Hash zurueck:
+
+            var newRanges= {}
+            for each ( var range in ranges ) {
+                for ( var y= range[1]; y <= range[3]; y++ ) {
+                    for ( var x= range[0]; x <= range[2]; x++ ) {
+                        if ( x < 0 || y < 0 ) continue
+                        if ( x + ':' + y in newRanges ) continue
+                        newRanges[x + ':' + y]= [x, y, x, y]
+                    }
+                }
+            }
+            return newRanges
+
+/*
+            var lookup= {}
             var newRanges= []
             for each ( var range in ranges ) {
                 for ( var y= range[1]; y <= range[3]; y++ ) {
@@ -82,6 +96,7 @@ console.log("_flatten using slow")
                 }
             }
             return newRanges
+*/
         }
 
 /*
@@ -351,6 +366,8 @@ console.log('_Atom.new:', this._atomId, this.name, parent ? '(parent:' + parent.
 
         _Atom.prototype.getRanges= function() this.parent ? this.parent.getRanges() : []
 
+        _Atom.prototype.getRangeValue= function( range ) this.parent ? this.parent.getRangeValue(range) : null
+
         _Atom.prototype.valueDeps= function() _flatten(this._valueDeps())
         _Atom.prototype.valueDepsAsString= function() rangesToString(this.valueDeps())
 
@@ -417,6 +434,13 @@ console.log("_Atom.dirty: add", this._atomId, rangesToString([range]), atomId);
 
             return this;
         }
+
+
+
+        // ???
+        _Atom.prototype.getValues= []
+
+
 
 //        _Atom.prototype.getCell= function () {
 //            var ranges= this.getFlattenedRanges()
@@ -568,46 +592,6 @@ console.log("_Atom.getValue, dirties:", Rd(_Atom.dirties), ", ranges:", rangesTo
 
 
 // =============================================================================
-//      UNUSED
-// =============================================================================
-
-/*
-        var intersection= function () {
-            if ( ranges.length <= 1 ) return this
-            var newRange= null
-            for each ( var range in ranges ) {
-                if ( newRange === null ) {
-                    newRange= range.concat()
-                    continue
-                }
-                if ( range[0] > newRange[0] ) newRange[0]= range[0]
-                if ( range[1] > newRange[1] ) newRange[1]= range[1]
-                if ( range[2] < newRange[2] ) newRange[2]= range[2]
-                if ( range[3] < newRange[3] ) newRange[3]= range[3]
-            }
-            if ( newRange[0] > newRange[2] || newRange[1] > newRange[3] ) return new Ranges([])
-            return new Ranges([ newRange ])
-        }
-
-        var union= function () {
-            if ( ranges.length <= 1 ) return this
-            var newRange= null
-            for each ( var range in ranges ) {
-                if ( newRange === null ) {
-                    newRange= range.concat()
-                    continue
-                }
-                if ( range[0] < newRange[0] ) newRange[0]= range[0]
-                if ( range[1] < newRange[1] ) newRange[1]= range[1]
-                if ( range[2] > newRange[2] ) newRange[2]= range[2]
-                if ( range[3] > newRange[3] ) newRange[3]= range[3]
-            }
-            return new Ranges([ newRange ])
-        }
-*/
-
-
-// =============================================================================
 //      Crop extends _Atom
 // =============================================================================
 
@@ -729,6 +713,102 @@ console.log("_Atom.getValue, dirties:", Rd(_Atom.dirties), ", ranges:", rangesTo
 
 
 // =============================================================================
+//      XsetValue extends _Atom
+// =============================================================================
+
+        var _XsetValue= function ( parent, value ) {
+            _Atom.call(this, parent)
+
+            // if ( !(value instanceof _Atom) ) return value.getValues()
+            // V= function ( value ) (new _Atom).addRange( 1, 1 ).setValue(value)
+
+            this.getRangeValue= function( range ) {
+                var ranges= this.getFlattenedRanges()
+                var key= range[0] + ':' + range[1]
+                if ( !(key in ranges) ) return // undefined
+                return value
+            }
+
+
+            this.getValues= function() {
+                if ( value instanceof _Atom ) return value.getValues()
+                return value
+            }
+        }
+
+        _Atom.extend('XsetValue', _XsetValue, function(value) new _XsetValue(this, value))
+
+
+// =============================================================================
+//      Xadd extends _Atom
+// =============================================================================
+
+        var _Xadd= function ( parent, value ) {
+            _Atom.call(this, parent)
+
+            // if ( !(value instanceof _Atom) ) return value.getValues()
+            // V= function ( value ) (new _Atom).addRange( 1, 1 ).setValue(value)
+/*
+            this.getValues= function() {
+                var parentValues= parent.getValues()
+
+                var v= (value instanceof _Atom) ? value.getValues() : value
+                if ( parentValue.length == 0 ) return v
+                if ( parentValue.length == 1 ) return parentValues[0] + v
+                throw "InvalidArgs: Xadd"
+            }
+
+            this.values= {}
+
+            this.getRangeValue= function( range ) {
+                var ranges= this.getFlattenedRanges()
+                var key= range[0] + ':' + range[1]
+                if ( !(key in ranges) ) return 0
+                var value= ranges.byRange(range[0] + ':' + range[1])
+                if ( value isnot numeric ) return 0
+                return value
+            }
+
+            this.getRangeNumberValue= function( range ) {
+                var key= range[0] + ':' + range[1]
+                if ( !(key in values) ) return parent.getRangeNumberValue( range )
+                if ( typeof value !== 'number' ) throw "AddNoNumber"
+                return values[key]
+            }
+
+            this._getRangeNumberValue= function( range ) {
+                return parent.getRangeNumberValue(range[key]) + value
+            }
+
+            this.getValues= function() {
+                var ranges= this.getFlattenedRanges()
+                var values= {}
+                for ( var key in ranges ) values[key]= this._getRangeNumberValue(range[key])
+                return values
+            }
+
+            this.getValues2= function() {
+                var ranges= this.getFlattenedRanges()
+
+                for each ( var range in ranges ) {
+                    parent.getNumberRangeValue(range)
+                }
+
+                var parentValues= parent.getValues()
+
+                var v= (value instanceof _Atom) ? value.getValues() : value
+                if ( parentValue.length == 0 ) return v
+                if ( parentValue.length == 1 ) return parentValues[0] + v
+                throw "InvalidArgs: Xadd"
+            }
+*/
+
+        }
+
+        _Atom.extend('Xadd', _Xadd, function(value) new _Xadd(this, value))
+
+
+// =============================================================================
 //      Interface (window context)
 // =============================================================================
 
@@ -749,3 +829,45 @@ console.log("_Atom.getValue, dirties:", Rd(_Atom.dirties), ", ranges:", rangesTo
         DA= function ( i ) atoms[i].dump("ATOM")
 
 })()
+
+
+// =============================================================================
+//      UNUSED
+// =============================================================================
+
+/*
+        var intersection= function () {
+            if ( ranges.length <= 1 ) return this
+            var newRange= null
+            for each ( var range in ranges ) {
+                if ( newRange === null ) {
+                    newRange= range.concat()
+                    continue
+                }
+                if ( range[0] > newRange[0] ) newRange[0]= range[0]
+                if ( range[1] > newRange[1] ) newRange[1]= range[1]
+                if ( range[2] < newRange[2] ) newRange[2]= range[2]
+                if ( range[3] < newRange[3] ) newRange[3]= range[3]
+            }
+            if ( newRange[0] > newRange[2] || newRange[1] > newRange[3] ) return new Ranges([])
+            return new Ranges([ newRange ])
+        }
+
+        var union= function () {
+            if ( ranges.length <= 1 ) return this
+            var newRange= null
+            for each ( var range in ranges ) {
+                if ( newRange === null ) {
+                    newRange= range.concat()
+                    continue
+                }
+                if ( range[0] < newRange[0] ) newRange[0]= range[0]
+                if ( range[1] < newRange[1] ) newRange[1]= range[1]
+                if ( range[2] > newRange[2] ) newRange[2]= range[2]
+                if ( range[3] > newRange[3] ) newRange[3]= range[3]
+            }
+            return new Ranges([ newRange ])
+        }
+*/
+
+
