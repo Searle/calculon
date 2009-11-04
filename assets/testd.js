@@ -1,4 +1,12 @@
 
+var test_ranges4= function() {
+
+    var ranges= C('C5').XsetValue(5)
+
+    console.warn(ranges.getValue());
+
+}
+
 var test_ranges= function() {
 
     var ranges= C('C5','D8')
@@ -95,7 +103,7 @@ var test_let= function() {
     for each ( let [x, y] in ar ) console.log("let test:", x, y)
 }
 
-test_ranges()
-// test_model()
+// test_ranges()
+test_ranges4()
 // test_let()
 

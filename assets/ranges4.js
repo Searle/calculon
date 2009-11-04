@@ -734,6 +734,20 @@ console.log("_Atom.getValue, dirties:", Rd(_Atom.dirties), ", ranges:", rangesTo
                 if ( value instanceof _Atom ) return value.getValues()
                 return value
             }
+
+            this.getRangeNumberValue= function( range ) {
+                var ranges= this.getFlattenedRanges()
+                var key= range[0] + ':' + range[1]
+                if ( !(key in ranges) ) return parent.getRangeNumberValue( range )
+                if ( typeof value !== 'number' ) throw "RangeNumberNoNumber"
+                return value
+            }
+
+            this.getValue= function() {
+                var ranges= this.getFlattenedRanges()
+                return this._getRangeNumberValue(range[key])
+            }
+
         }
 
         _Atom.extend('XsetValue', _XsetValue, function(value) new _XsetValue(this, value))
@@ -748,7 +762,7 @@ console.log("_Atom.getValue, dirties:", Rd(_Atom.dirties), ", ranges:", rangesTo
 
             // if ( !(value instanceof _Atom) ) return value.getValues()
             // V= function ( value ) (new _Atom).addRange( 1, 1 ).setValue(value)
-/*
+
             this.getValues= function() {
                 var parentValues= parent.getValues()
 
@@ -759,7 +773,7 @@ console.log("_Atom.getValue, dirties:", Rd(_Atom.dirties), ", ranges:", rangesTo
             }
 
             this.values= {}
-
+/*
             this.getRangeValue= function( range ) {
                 var ranges= this.getFlattenedRanges()
                 var key= range[0] + ':' + range[1]
@@ -768,7 +782,7 @@ console.log("_Atom.getValue, dirties:", Rd(_Atom.dirties), ", ranges:", rangesTo
                 if ( value isnot numeric ) return 0
                 return value
             }
-
+*/
             this.getRangeNumberValue= function( range ) {
                 var key= range[0] + ':' + range[1]
                 if ( !(key in values) ) return parent.getRangeNumberValue( range )
@@ -801,7 +815,6 @@ console.log("_Atom.getValue, dirties:", Rd(_Atom.dirties), ", ranges:", rangesTo
                 if ( parentValue.length == 1 ) return parentValues[0] + v
                 throw "InvalidArgs: Xadd"
             }
-*/
 
         }
 
