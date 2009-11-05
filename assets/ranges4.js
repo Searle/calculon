@@ -56,12 +56,12 @@
 
             if ( ranges.length === 0 ) return ranges
 
-console.log("_flatten:", rangesToString(ranges))
+console.debug("_flatten:", rangesToString(ranges))
 
             // Catch common case: Range with one cell
             if ( ranges.length === 1 && ranges[0][0] === ranges[0][2] && ranges[0][1] === ranges[0][3] ) return ranges
 
-console.log("_flatten using slow")
+console.debug("_flatten using slow")
 
             // Irgendwie die Ranges merken:
             // - Key bauen fuer alle Ranges
@@ -166,12 +166,14 @@ console.log("_flatten using slow")
             // remember calling atom as referer to this cell
             this._atomRefs[atomId]= true;
             if (this._cellRange === undefined) this._cellRange= root.addRange( [this._x, this._y] )
-            return this._fn_value.apply(this._cellRange, arguments)
+            var value= this._fn_value.apply(this._cellRange, arguments)
+            if (value instanceof _Atom) return value.getValue()
+            return value
         }
         
         Cell.prototype.dirty= function() {
             for (var atomId in this._atomRefs) {
-                console.log(atomId)
+                console.debug(atomId)
                 atoms[atomId].dirty();
             }
         }
@@ -228,7 +230,7 @@ console.log("_flatten using slow")
             // Garbage collection horror
             atoms[_atomId]= this
 
-console.log('_Atom.new:', this._atomId, this.name, parent ? '(parent:' + parent._atomId + ' ' + parent.name + ')' : '')
+console.debug('_Atom.new:', this._atomId, this.name, parent ? '(parent:' + parent._atomId + ' ' + parent.name + ')' : '')
 
             // UNUSED & BUGGY (refs are not traced everywhere) !!!
             this._cellRefs= {}
@@ -328,14 +330,14 @@ console.log('_Atom.new:', this._atomId, this.name, parent ? '(parent:' + parent.
             _Atom.dirties[this._atomId]= true
             for each ( var range in this.getFlattenedRanges() ) {
 
-console.log("_Atom.dirty: add", this._atomId, rangesToString([range]))
+console.debug("_Atom.dirty: add", this._atomId, rangesToString([range]))
 
                 var cell= __getCell(range)
                 if ( cell === undefined ) continue
 
                 for ( var atomId in cell.getAtomRefs() ) {
 
-console.log("_Atom.dirty: add", this._atomId, rangesToString([range]), atomId);
+console.debug("_Atom.dirty: add", this._atomId, rangesToString([range]), atomId);
 
                     _Atom.dirties[atomId]= true
 
@@ -373,7 +375,7 @@ console.log("_Atom.dirty: add", this._atomId, rangesToString([range]), atomId);
             var ranges= this.getFlattenedRanges()
             if ( ranges.length === 0 ) return // undefined
 
-console.log("_Atom.getValue, dirties:", Rd(_Atom.dirties), ", ranges:", rangesToString(ranges));
+console.debug("_Atom.getValue, dirties:", Rd(_Atom.dirties), ", ranges:", rangesToString(ranges));
 
             var cell= __getCell(ranges[0])
 
@@ -477,7 +479,7 @@ console.log("_Atom.getValue, dirties:", Rd(_Atom.dirties), ", ranges:", rangesTo
                 return ranges
             }
 
-            console.log("_addRange error:", arg, Object.prototype.toString.call(arg))
+            console.debug("_addRange error:", arg, Object.prototype.toString.call(arg))
 
             throw "RangeArgException:" + arg
         }
@@ -485,7 +487,7 @@ console.log("_Atom.getValue, dirties:", Rd(_Atom.dirties), ", ranges:", rangesTo
         var _AddRange= function( parent, arg ) {
             _Atom.call(this, parent)
 
-// console.log(parent, ranges,arg)
+// console.debug(parent, ranges,arg)
 
             this.getRanges= function() {
                 return __addRange(parent.getRanges(), arg)
