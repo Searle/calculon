@@ -658,7 +658,7 @@ console.debug("_Atom.dirty: add", this._atomId, rangesToString([range]), atomId)
 
         C= function () root.addRange(Array.prototype.slice.call(arguments))
 
-        getAllCells= function() cells
+        GetAllCells= function() cells
 
         DumpCells= function () {
             console.log(cells)

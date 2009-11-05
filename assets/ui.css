@@ -201,8 +201,14 @@ body.show-quiz     .tab.show-quiz {
     overflow: auto;
 }
 
+.calculon-sheet .rows,
+.calculon-sheet .cols {
+    background-color: #3AF;
+}
+
 .calculon-sheet > table {
     border: 1px solid black;
+    background-color: #FFF;
 }
 
 .calculon-sheet > table > tbody > tr {
