@@ -1,18 +1,81 @@
 
 var test_ranges4= function() {
 
-    var ranges= C('C5').XsetValue(5)
+//    var ranges= C('C5').XsetValue(5)
 
-    console.warn(ranges.getValue());
+//    console.warn(ranges.getValue());
 
-    var v= C('C5', 'C6').XsetValue(5).addRange('C7', 'C8').Xadd(1)
-    console.log(v.getValues());
-}
+    Set(C('C5'), 5);
+    console.log(C('C5').getValues());
 
-var test_ranges= function() {
+    Set(C('C6', 'C8'), 7);
+    console.log(C('C7').getValues());
+    console.log(C('C7').add(5).getValues());
+    Set(C('C9'), C('C7').add(5));
+    console.log(C('C9').getValues());
 
     var ranges= C('C5','D8')
     ranges.dump("ranges")
+
+    var newranges= ranges.addRange('C3', 'D4')
+    newranges.dump("newranges")
+
+    var Inf= Number.MAX_VALUE
+
+    Set(C('C5'), "C5")
+
+    Set(C('C6'), "C6")
+    Set(C('E6'), "Zuppi")
+
+    Set(C('C7'), "Steppi")
+    Set(C('E7'), "HUHU!")
+
+    Set(C('C8'), "C8")
+
+    var SVERWEIS= function ( searchRanges, value, col_i ) {
+        // var sv= searchRanges.dump("init").crop(0, 0, 0, Inf).dump("cropped").grep(value).ofs(col_i, 0)
+        // sv= sv.grep(value)          // geht???
+        // sv= sv.dump("grepped")      // geht nicht??? oder jetzt doch? hmm
+        // return sv
+
+        // ofs ist evt falsch, wenn sich col_i innerhalb von searchRanges befinden muss
+
+        // return searchRanges.crop(0, 0, 0, Inf).grep(value)
+        GREP= searchRanges.crop(0, 0, 0, Inf).grep(value);
+        return GREP.ofs(col_i, 0)
+
+        return searchRanges.crop(0, 0, 0, Inf).grep(value).ofs(col_i, 0)
+    }
+
+    var sv= SVERWEIS(newranges, "Steppi", 2); // .dump("sverweis Steppi")
+
+    console.warn("SV Ergebnis:", sv.getValues() )
+    
+    Set(C('C6'), 'Steppi');
+    console.warn("SV Ergebnis:", sv.getValues() )
+    
+/*
+    var v2= C('C5', 'C6').XsetValue(5).addRange('C6', 'C7').Xadd(1)
+    // 6, 6, 1
+    
+    var v_a= C('C5', 'C6').XsetValue(5);
+    var v_b= C('C7', 'C8').XsetValue(6);
+    var v_ab= v_a.addRange(v_b);
+    console.log(v_ab.getValues())
+    // 5,5,6,6
+    
+    Set(['C1:D4', 'J6:K8'], function() {....})
+    
+
+    var a= C('C7', 'C8').setValue(6)
+//    C('C5', 'C6').XsetValue(5).addRange('C7', 'C8').getValues() // 5, 5, 6, null
+    C('C5', 'C6').XsetValue(5).addRange(a).getValues() // 5, 5, 6, 6
+
+*/
+
+}
+
+var test_ranges= function() {
 
     var newranges= ranges.addRange('C3', 'D4')
     newranges.dump("newranges")

@@ -1,17 +1,19 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html>
 <head>
-    <meta http-equiv="Content-Type" content="text/html;charset=utf-8"></meta>
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
     <title>calculon</title>
-    <link rel="stylesheet" type="text/css" href="assets/all.css"></link>
+    <link rel="stylesheet" type="text/css" href="assets/all.css" />
     <script>
         if ( typeof console === "undefined" ) console = {};
 
         for each (var name in ['log', 'warn', 'error'].filter(function(x) !console[x])) console[name] = function() {};
 
+        READABLE_TOSTRING= true
     </script>
-    <script language="javascript" src="assets/ranges.js"></script>
-    <script language="javascript" src="assets/test.js"></script>
+    <script src="assets/readable.js"></script>
+    <script type="application/javascript;version=1.7" src="assets/ranges4.js"></script>
+    <script type="application/javascript;version=1.7" src="assets/testd.js"></script>
 </head>
 <body class="show-overview">
 <script>

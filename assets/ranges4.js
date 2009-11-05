@@ -132,144 +132,41 @@ console.log("_flatten using slow")
 */
 
 // =============================================================================
-//      Variant
-// =============================================================================
-
-        var variants= {}
-        var variantId= 0
-
-        var Variant= function( atomId, value ) {
-
-            this._variantId= ++variantId;
-            this._atomRefs= {}
-
-// Remove optimization for now. To sensitive. Use setValue()
-//            if ( atomId !== undefined ) {
-//                this._value= value
-//                this._initialized= true
-//                this._atomRefs[atomId]= true
-//                atoms[atomId].dirty();
-//                return
-//            }
-
-            this._initialized= false
-            this._value= undefined
-        }
-
-        Variant.prototype.getValue= function( atomId ) {
-            this._atomRefs[atomId]= true
-
-console.log("Variant.getValue:", this._variantId, atomId, '=', this._value)
-
-            if ( this._value instanceof _Atom ) return this._value.getValue()
-
-            return this._value;
-        }
-
-        Variant.prototype.setValue= function( atomId, value ) {
-
-console.log("Variant.setValue:", this._variantId, atomId, '=', value)
-
-            if ( value instanceof _Atom ) {
-
-                // value._reParent(atoms[atomId])
-
-                this._value= value
-                this.dirty()
-                this._initialized= true
-                return
-            }
-
-            if ( typeof value === 'string' ) {
-
-                this._value= value
-                this.dirty()
-                this._initialized= true
-                return
-            }
-
-            if ( typeof value === 'number' ) {
-
-                this._value= value
-                this.dirty()
-                this._initialized= true
-                return
-            }
-
-            throw "VariantValueType " + value
-        }
-
-        Variant.prototype._dumpRefs= function ( comment ) {
-            for ( var atomId in this._atomRefs ) {
-                console.log('variantDumpRef', comment + ':', atoms[atomId])
-                atoms[atomId].dump('variantDumpRef ' + comment)
-            }
-        }
-
-        Variant.prototype.dirty= function() {
-            if ( this._initialized === false ) return
-
-            for ( var atomId in this._atomRefs ) {
-                atoms[atomId].dirty();
-            }
-        }
-
-//        var emptyVariant= new Variant()
-
-// =============================================================================
 //      Cell
 // =============================================================================
 
 
 //        var cellId= 0
 
-        var Cell= function(x, y) {
-
-//            this._cellId= ++cellId;
+        var Cell= function(rootAtomId, x, y, fn_value) {
 
             this._x= x
             this._y= y
+            this._atomId= rootAtomId;
 
-            this._variant= undefined
+            this._atomRefs= {};
+
+            this.setValue(fn_value)
+        }
+        
+        Cell.prototype.setValue= function(fn_value) {
+            this._fn_value= fn_value || function() undefined
+            this.dirty();
         }
 
-        Cell.prototype.getValue= function( atomId ) {
-            if ( this._variant === undefined ) return // undefined
-
-            return this._variant.getValue(atomId);
+        Cell.prototype.getValue= function() {
+            this._atomRefs[this._atomId]= true;
+            return this._fn_value.apply(this, arguments)
         }
-
-        Cell.prototype.setValue= function( atomId, value ) {
-
-            if ( this._variant === undefined ) {
-                this._variant= new Variant()
-            }
-            this._variant.setValue(atomId, value)
-
-            // if ( this._variant !== undefined ) this._variant.dirty()
-            // this._variant= new Variant(atomId, value)
-        }
-
-        Cell.prototype._dumpRefs= function ( comment ) {
-            if ( this._variant === undefined ) return
-
-            this._variant._dumpRefs(comment);
-        }
-
-        Cell.prototype.getKey= function() {
-            return this._x + ':' + this._y
-        }
-
+        
         Cell.prototype.dirty= function() {
-            if ( this._variant === undefined ) return
-
-            this._variant.dirty()
+            for (var atomId in this._atomRefs) {
+                console.log(atomId)
+                atoms[atomId].dirty();
+            }
         }
-
-        Cell.prototype.getAtomRefs= function() {
-            if ( this._variant === undefined ) return []
-            return this._variant._atomRefs
-        }
+        
+        Cell.prototype.getAtomRefs= function() this._atomRefs
 
 
         // -----------------------------------------------------------------------------
@@ -283,20 +180,17 @@ console.log("Variant.setValue:", this._variantId, atomId, '=', value)
 //        var emptyCell= new Cell()
 
         var _getCell= function( atomRootId, x, y ) {
-            if ( !(atomRootId in cells) ) {
-                cells[atomRootId]= {}
-            }
             var key= x + ':' + y
-            var cell= cells[atomRootId][key]
+            var cell= cells[key]
             if ( cell === undefined ) {
-                cell= cells[atomRootId][key]= new Cell(x, y)
+                cell= cells[key]= new Cell(atomRootId, x, y)
             }
             return cell
         }
 
         var __getCell= function( atomRootId, x, y ) {
             if ( !(atomRootId in cells) ) return // undefined
-            return cells[atomRootId][x + ':' + y]
+            return cells[x + ':' + y]
         }
 
 // =============================================================================
@@ -379,7 +273,7 @@ console.log('_Atom.new:', this._atomId, this.name, parent ? '(parent:' + parent.
         _Atom.prototype.getFlattenedRanges= function () {
 
             // TODO: Check for recursion first?
-            if ( this._parent === undefined ) return []
+            if ( this._parent === undefined ) return {}
 
             if ( this.__flattenSemaphore === true ) {
                 this.__flattenSemaphore= false
@@ -419,7 +313,8 @@ console.log('_Atom.new:', this._atomId, this.name, parent ? '(parent:' + parent.
 
 console.log("_Atom.dirty: add", this._atomId, rangesToString([range]))
 
-                var cell= __getCell(this._rootId, range[0], range[1])
+//                var cell= __getCell(this._rootId, range[0], range[1])
+                var cell= _getCell(this._atomId, range[0], range[1])
                 if ( cell === undefined ) continue
 
                 for ( var atomId in cell.getAtomRefs() ) {
@@ -435,10 +330,16 @@ console.log("_Atom.dirty: add", this._atomId, rangesToString([range]), atomId);
             return this;
         }
 
+        _Atom.prototype.getValues= function() {
+            var ranges= this.getFlattenedRanges()
+            if ( ranges.length === 0 ) return []
 
-
-        // ???
-        _Atom.prototype.getValues= []
+            var values= []
+            for each ( var range in ranges ) {
+                values.push(_getCell(this._atomId, range[0], range[1]).getValue())
+            }
+            return values
+        }
 
 
 
@@ -667,7 +568,7 @@ console.log("_Atom.getValue, dirties:", Rd(_Atom.dirties), ", ranges:", rangesTo
             this.getRanges= function() {
                 var newRanges= []
                 for each ( var range in parent.getFlattenedRanges() ) {
-                    var cellValue= this._getRangeValue(range)
+                    var cellValue= _getCell(this._atomId, range[0], range[1]).getValue()
                     if ( cellValue !== undefined && cellValue == value ) {
                         newRanges.push(range)
                     }
@@ -690,26 +591,18 @@ console.log("_Atom.getValue, dirties:", Rd(_Atom.dirties), ", ranges:", rangesTo
 
             if ( value instanceof _Atom ) value= value.getValue()
 
-            this.getRanges= function() {
+            this.getValues= function() {
+                var values= [];
                 for each ( var range in parent.getFlattenedRanges() ) {
-
-                    var cell= __getCell(this._rootId, range[0], range[1])
-                    if ( cell === undefined ) continue
-
-                    // Mit parent statt mit this. Stimmt das? Mit this gibt's ne Rekursion
-                    var cellValue= cell.getValue(parent._atomId);
-                    if ( typeof cellValue === 'number' ) {
-
-// Autsch, Seiteneffekt!
-
-                        cell.setValue(parent._atomId, cellValue + value)
-                    }
+                    values.push(_getCell(this._atomId, range[0], range[1]).getValue() + value);
                 }
-                return parent.getRanges()
+                return values;
             }
         }
 
         _Atom.extend('add', _Add, function(value) new _Add(this, value))
+
+
 
 
 // =============================================================================
@@ -763,6 +656,7 @@ console.log("_Atom.getValue, dirties:", Rd(_Atom.dirties), ", ranges:", rangesTo
             // if ( !(value instanceof _Atom) ) return value.getValues()
             // V= function ( value ) (new _Atom).addRange( 1, 1 ).setValue(value)
 
+/*
             this.getValues= function() {
                 var parentValues= parent.getValues()
 
@@ -771,8 +665,8 @@ console.log("_Atom.getValue, dirties:", Rd(_Atom.dirties), ", ranges:", rangesTo
                 if ( parentValue.length == 1 ) return parentValues[0] + v
                 throw "InvalidArgs: Xadd"
             }
+*/
 
-            this.values= {}
 /*
             this.getRangeValue= function( range ) {
                 var ranges= this.getFlattenedRanges()
@@ -783,22 +677,9 @@ console.log("_Atom.getValue, dirties:", Rd(_Atom.dirties), ", ranges:", rangesTo
                 return value
             }
 */
-            this.getRangeNumberValue= function( range ) {
-                var key= range[0] + ':' + range[1]
-                if ( !(key in values) ) return parent.getRangeNumberValue( range )
-                if ( typeof value !== 'number' ) throw "AddNoNumber"
-                return values[key]
-            }
 
             this._getRangeNumberValue= function( range ) {
-                return parent.getRangeNumberValue(range[key]) + value
-            }
-
-            this.getValues= function() {
-                var ranges= this.getFlattenedRanges()
-                var values= {}
-                for ( var key in ranges ) values[key]= this._getRangeNumberValue(range[key])
-                return values
+                return parent.getRangeNumberValue(range) + value
             }
 
             this.getValues2= function() {
@@ -830,6 +711,23 @@ console.log("_Atom.getValue, dirties:", Rd(_Atom.dirties), ", ranges:", rangesTo
         var root= new _Atom
 
         C= function () root.addRange(Array.prototype.slice.call(arguments))
+
+        var _cells= {};
+
+        Set= function ( dest, rawValue ) {
+            var value= rawValue;
+            if ( value instanceof _Atom ) {
+                value= function() rawValue.getValues()[0];
+            }
+            else if ( typeof value === 'number' || typeof value === 'string' ) {
+                value = function() rawValue;
+            }
+            var ranges= dest.getFlattenedRanges();
+            for each ( var range in ranges ) {
+                _getCell(dest._atomId, range[0], range[1]).setValue(value);
+//                _setCell('', range[0], range[1], new Cell(dest._atomId, range[0], range[1], value));
+            };
+        }
 
         DumpCells= function () {
             console.log(cells)
