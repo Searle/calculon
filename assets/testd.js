@@ -6,13 +6,14 @@ var test_ranges4= function() {
 //    console.warn(ranges.getValue());
 
     C('C5').setValue(5);
-    console.log(C('C5').getValues());
+    console.log('C5: ', C('C5').getValues());
 
-    C('C6', 'C8').setValue(7);
-    console.log(C('C7').getValues());
-    console.log(C('C7').add(5).getValues());
+    C('C6', 'C8').setValue(function() this.ofs(0, -1).getValue() + 1)
+
+    console.log('C7: ', C('C7').getValue());
+    console.log('C7 + 5: ', C('C7').add(5).getValues());
     C('C9').setValue(C('C7').add(5));
-    console.log(C('C9').getValues());
+    console.log('C9: ', C('C9').getValues());
 
     var ranges= C('C5','D8')
     ranges.dump("ranges")
