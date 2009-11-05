@@ -170,14 +170,14 @@ console.debug("_flatten using slow")
             if (value instanceof _Atom) return value.getValue()
             return value
         }
-        
+
         Cell.prototype.dirty= function() {
             for (var atomId in this._atomRefs) {
                 console.debug(atomId)
                 atoms[atomId].dirty();
             }
         }
-        
+
         Cell.prototype.getAtomRefs= function() this._atomRefs
 
 
@@ -205,7 +205,7 @@ console.debug("_flatten using slow")
             // FIXME: key= coord.join(':') ??
             return cells[coord[0] + ':' + coord[1]]
         }
-        
+
         var _getCellValue= function( atomId, coord ) {
             var cell= __getCell(coord)
             if (cell === undefined) return // undefined
@@ -371,19 +371,6 @@ console.debug("_Atom.dirty: add", this._atomId, rangesToString([range]), atomId)
 
             // TODO: is that ok?
             return this.getValues()[0];
-
-            var ranges= this.getFlattenedRanges()
-            if ( ranges.length === 0 ) return // undefined
-
-console.debug("_Atom.getValue, dirties:", Rd(_Atom.dirties), ", ranges:", rangesToString(ranges));
-
-            var cell= __getCell(ranges[0])
-
-            // if ( !cell ) return '#EMPTY'
-            if ( cell === undefined ) return // undefined
-
-            this._cellRefs[cell.getKey()]= true;
-            return cell.getValue(this._atomId);
         }
 
         _Atom.prototype.setValue= function( newValue ) {
@@ -625,105 +612,6 @@ console.debug("_Atom.getValue, dirties:", Rd(_Atom.dirties), ", ranges:", ranges
         _Atom.extend('add', _Add, function(value) new _Add(this, value))
 
 
-
-
-// =============================================================================
-//      XsetValue extends _Atom
-// =============================================================================
-
-        var _XsetValue= function ( parent, value ) {
-            _Atom.call(this, parent)
-
-            // if ( !(value instanceof _Atom) ) return value.getValues()
-            // V= function ( value ) (new _Atom).addRange( 1, 1 ).setValue(value)
-
-            this.getRangeValue= function( range ) {
-                var ranges= this.getFlattenedRanges()
-                var key= range[0] + ':' + range[1]
-                if ( !(key in ranges) ) return // undefined
-                return value
-            }
-
-
-            this.getValues= function() {
-                if ( value instanceof _Atom ) return value.getValues()
-                return value
-            }
-
-            this.getRangeNumberValue= function( range ) {
-                var ranges= this.getFlattenedRanges()
-                var key= range[0] + ':' + range[1]
-                if ( !(key in ranges) ) return parent.getRangeNumberValue( range )
-                if ( typeof value !== 'number' ) throw "RangeNumberNoNumber"
-                return value
-            }
-
-            this.getValue= function() {
-                var ranges= this.getFlattenedRanges()
-                return this._getRangeNumberValue(range[key])
-            }
-
-        }
-
-        _Atom.extend('XsetValue', _XsetValue, function(value) new _XsetValue(this, value))
-
-
-// =============================================================================
-//      Xadd extends _Atom
-// =============================================================================
-
-        var _Xadd= function ( parent, value ) {
-            _Atom.call(this, parent)
-
-            // if ( !(value instanceof _Atom) ) return value.getValues()
-            // V= function ( value ) (new _Atom).addRange( 1, 1 ).setValue(value)
-
-/*
-            this.getValues= function() {
-                var parentValues= parent.getValues()
-
-                var v= (value instanceof _Atom) ? value.getValues() : value
-                if ( parentValue.length == 0 ) return v
-                if ( parentValue.length == 1 ) return parentValues[0] + v
-                throw "InvalidArgs: Xadd"
-            }
-*/
-
-/*
-            this.getRangeValue= function( range ) {
-                var ranges= this.getFlattenedRanges()
-                var key= range[0] + ':' + range[1]
-                if ( !(key in ranges) ) return 0
-                var value= ranges.byRange(range[0] + ':' + range[1])
-                if ( value isnot numeric ) return 0
-                return value
-            }
-*/
-
-            this._getRangeNumberValue= function( range ) {
-                return parent.getRangeNumberValue(range) + value
-            }
-
-            this.getValues2= function() {
-                var ranges= this.getFlattenedRanges()
-
-                for each ( var range in ranges ) {
-                    parent.getNumberRangeValue(range)
-                }
-
-                var parentValues= parent.getValues()
-
-                var v= (value instanceof _Atom) ? value.getValues() : value
-                if ( parentValue.length == 0 ) return v
-                if ( parentValue.length == 1 ) return parentValues[0] + v
-                throw "InvalidArgs: Xadd"
-            }
-
-        }
-
-        _Atom.extend('Xadd', _Xadd, function(value) new _Xadd(this, value))
-
-
 // =============================================================================
 //      Interface (window context)
 // =============================================================================
@@ -733,8 +621,6 @@ console.debug("_Atom.getValue, dirties:", Rd(_Atom.dirties), ", ranges:", ranges
         var root= new _Atom
 
         C= function () root.addRange(Array.prototype.slice.call(arguments))
-
-        var _cells= {};
 
         DumpCells= function () {
             console.log(cells)
@@ -747,45 +633,5 @@ console.debug("_Atom.getValue, dirties:", Rd(_Atom.dirties), ", ranges:", ranges
         DA= function ( i ) atoms[i].dump("ATOM")
 
 })()
-
-
-// =============================================================================
-//      UNUSED
-// =============================================================================
-
-/*
-        var intersection= function () {
-            if ( ranges.length <= 1 ) return this
-            var newRange= null
-            for each ( var range in ranges ) {
-                if ( newRange === null ) {
-                    newRange= range.concat()
-                    continue
-                }
-                if ( range[0] > newRange[0] ) newRange[0]= range[0]
-                if ( range[1] > newRange[1] ) newRange[1]= range[1]
-                if ( range[2] < newRange[2] ) newRange[2]= range[2]
-                if ( range[3] < newRange[3] ) newRange[3]= range[3]
-            }
-            if ( newRange[0] > newRange[2] || newRange[1] > newRange[3] ) return new Ranges([])
-            return new Ranges([ newRange ])
-        }
-
-        var union= function () {
-            if ( ranges.length <= 1 ) return this
-            var newRange= null
-            for each ( var range in ranges ) {
-                if ( newRange === null ) {
-                    newRange= range.concat()
-                    continue
-                }
-                if ( range[0] < newRange[0] ) newRange[0]= range[0]
-                if ( range[1] < newRange[1] ) newRange[1]= range[1]
-                if ( range[2] > newRange[2] ) newRange[2]= range[2]
-                if ( range[3] > newRange[3] ) newRange[3]= range[3]
-            }
-            return new Ranges([ newRange ])
-        }
-*/
 
 
