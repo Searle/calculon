@@ -1,7 +1,7 @@
 
 var _test= function(title, fn, expected, compare) {
     if ( typeof compare === 'undefined' ) {
-        compare= function(result) result == expected
+        compare= function(result) result === expected
     }
     var result= fn();
     var success= compare(result, expected);
@@ -26,7 +26,13 @@ var test_SetGet= function() {
     C('A1').setValue(1);
     _test('C(A1).getValue()', function() C('A1').getValue(), 1)
     _test('C(A1).add(5).getValue()', function() C('A1').add(5).getValue(), 6)
-    _test('C(A1).setValue(C(A1).add(5)).getValue() (recursion test)', function() C('A1').setValue(function() C('A1').add(5)).getValue(), undefined)
+
+    // disable error console temporarily
+    var _console_error= console.error
+    console.error= function() {}
+    _test('C(A1).setValue(C(A1).add(5)).getValue() (recursion test)', function() C('A1').setValue(function() C('A1').add(5)).getValue(), null)
+    console.error= _console_error
+
     C('A1').setValue(1);
     C('A2', 'A10').setValue(function() this.ofs(0, -1).getValue() + 1);
     _test('C(A2).getValue() setValue returns value', function() C('A2').getValue(), 2)

@@ -172,7 +172,9 @@ console.debug("_flatten using slow")
             if (value instanceof _Atom) {
                 if (this._resolving) {
                     console.error('Recursion detected')
-                    return // undefined
+                    // FIXME: should we return null or undefined here?
+                    // choosed null here to distinguish from undefined cell (see add() etc.)
+                    return null
                 }
                 this._resolving= true;
                 value= value.getValue()
@@ -588,7 +590,7 @@ console.debug("_Atom.dirty: add", this._atomId, rangesToString([range]), atomId)
 
             if ( !_isFunction(fn_check) ) {
                 var value= fn_check;
-                fn_check= function(v) value == v
+                fn_check= function(v) value === v
             }
 
             this.getRanges= function() {
@@ -622,7 +624,11 @@ console.debug("_Atom.dirty: add", this._atomId, rangesToString([range]), atomId)
                 for each ( var range in parent.getFlattenedRanges() ) {
                     var cellValue= _getCellValue(this._atomId, range)
                     if (cellValue === undefined) {
-                        values.push(undefined)
+                        values.push(value)
+                        continue
+                    }
+                    if (cellValue === null) {
+                        values.push(null)
                         continue
                     }
                     values.push(cellValue + value)
