@@ -55,8 +55,9 @@ var test_sverweis= function() {
     var SVERWEIS= function ( searchRanges, value, col_i ) searchRanges.crop(0, 0, 0, Number.MAX_VALUE).grep(value).ofs(col_i, 0)
     _test('SVERWEIS("B1:E9", "B6", 2)', function() SVERWEIS(C('B1', 'E9'), 'B6', 2).getValues(), ['D6'], _compareArray)
     C('B3').setValue('B6')
-    _test('SVERWEIS("B1:E9", "B6", 2) (2)', function() SVERWEIS(C('B1', 'E9'), 'B6', 2).getValues(), ['D3', 'D6'], _compareArray)
+    _test('SVERWEIS("B1:E9", "B6", 2) (2 results)', function() SVERWEIS(C('B1', 'E9'), 'B6', 2).getValues(), ['D3', 'D6'], _compareArray)
     _test('SVERWEIS("B1:E9", "D3", 2)', function() SVERWEIS(C('B1', 'E9'), 'D3', 2).getValues(), [], _compareArray)
+    _test('SVERWEIS("B1:E9", "B1 || B6", 2) (value is function)', function() SVERWEIS(C('B1', 'E9'), function(v) v==='B1' || v==='B6', 2).getValues(), ['D1', 'D3', 'D6'], _compareArray)
 }
 
 

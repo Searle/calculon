@@ -571,14 +571,19 @@ console.debug("_Atom.dirty: add", this._atomId, rangesToString([range]), atomId)
 //      Grep extends _Atom
 // =============================================================================
 
-        var _Grep= function ( parent, value ) {
+        var _Grep= function ( parent, fn_check ) {
             _Atom.call(this, parent)
+
+            if ( !_isFunction(fn_check) ) {
+                var value= fn_check;
+                fn_check= function(v) value == v
+            }
 
             this.getRanges= function() {
                 var newRanges= []
                 for each ( var range in parent.getFlattenedRanges() ) {
                     var cellValue= _getCellValue(this._atomId, range)
-                    if ( cellValue !== undefined && cellValue == value ) {
+                    if ( cellValue !== undefined && fn_check(cellValue) ) {
                         newRanges.push(range)
                     }
                 }
