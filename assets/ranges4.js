@@ -138,24 +138,31 @@ console.log("_flatten using slow")
 
 //        var cellId= 0
 
-        var Cell= function(rootAtomId, x, y, fn_value) {
+        var Cell= function(atom, x, y, fn_value) {
 
             this._x= x
             this._y= y
-            this._atomId= rootAtomId;
+            this._atomId= atom._atomId;
+            this._rootAtomId= atom._rootId;
 
             this._atomRefs= {};
 
             this.setValue(fn_value)
         }
         
+        Cell.prototype.atom= function() atoms[this._atomId]
+        Cell.prototype.rootAtom= function() atoms[this._rootAtomId]
+        
         Cell.prototype.setValue= function(fn_value) {
             this._fn_value= fn_value || function() undefined
+            // mark all referers as dirty
             this.dirty();
         }
 
-        Cell.prototype.getValue= function() {
-            this._atomRefs[this._atomId]= true;
+        // FIXME: do we need caller's atomId or caller's rootAtomId here?
+        Cell.prototype.getValue= function(atomId) {
+            // remember calling atom as referer to this cell
+            this._atomRefs[atomId]= true;
             return this._fn_value.apply(this, arguments)
         }
         
@@ -179,18 +186,19 @@ console.log("_flatten using slow")
 
 //        var emptyCell= new Cell()
 
-        var _getCell= function( atomRootId, x, y ) {
-            var key= x + ':' + y
+        var _getCell= function( atom, coord ) {
+            // FIXME: key= coord.join(':') ??
+            var key= coord[0] + ':' + coord[1]
             var cell= cells[key]
             if ( cell === undefined ) {
-                cell= cells[key]= new Cell(atomRootId, x, y)
+                cell= cells[key]= new Cell(atom, coord[0], coord[1])
             }
             return cell
         }
 
-        var __getCell= function( atomRootId, x, y ) {
-            if ( !(atomRootId in cells) ) return // undefined
-            return cells[x + ':' + y]
+        var __getCell= function( coord ) {
+            // FIXME: key= coord.join(':') ??
+            return cells[coord[0] + ':' + coord[1]]
         }
 
 // =============================================================================
@@ -313,8 +321,7 @@ console.log('_Atom.new:', this._atomId, this.name, parent ? '(parent:' + parent.
 
 console.log("_Atom.dirty: add", this._atomId, rangesToString([range]))
 
-//                var cell= __getCell(this._rootId, range[0], range[1])
-                var cell= _getCell(this._atomId, range[0], range[1])
+                var cell= __getCell(range)
                 if ( cell === undefined ) continue
 
                 for ( var atomId in cell.getAtomRefs() ) {
@@ -336,7 +343,7 @@ console.log("_Atom.dirty: add", this._atomId, rangesToString([range]), atomId);
 
             var values= []
             for each ( var range in ranges ) {
-                values.push(_getCell(this._atomId, range[0], range[1]).getValue())
+                values.push(_getCell(this, range).getValue(this._atomId))
             }
             return values
         }
@@ -351,12 +358,15 @@ console.log("_Atom.dirty: add", this._atomId, rangesToString([range]), atomId);
 
         _Atom.prototype.getValue= function() {
 
+            // TODO: is that ok?
+            return this.getValues()[0];
+
             var ranges= this.getFlattenedRanges()
             if ( ranges.length === 0 ) return // undefined
 
 console.log("_Atom.getValue, dirties:", Rd(_Atom.dirties), ", ranges:", rangesToString(ranges));
 
-            var cell= __getCell(this._rootId, ranges[0][0], ranges[0][1])
+            var cell= __getCell(ranges[0])
 
             // if ( !cell ) return '#EMPTY'
             if ( cell === undefined ) return // undefined
@@ -366,17 +376,23 @@ console.log("_Atom.getValue, dirties:", Rd(_Atom.dirties), ", ranges:", rangesTo
         }
 
         _Atom.prototype.setValue= function( newValue ) {
-            this.dirty()
-            for each ( var range in this.getFlattenedRanges() ) {
-                var cell= _getCell(this._rootId, range[0], range[1])
-                cell.setValue(this._atomId, newValue)
+            var value= newValue;
+            if ( value instanceof _Atom ) {
+                value= function() newValue.getValues()[0];
             }
+            else if ( typeof value === 'number' || typeof value === 'string' ) {
+                value = function() newValue;
+            }
+            var ranges= this.getFlattenedRanges();
+            for each ( var range in ranges ) {
+                _getCell(this, range).setValue(value);
+            };
             return this;
         }
 
         _Atom.prototype._dumpCellRefs= function( comment ) {
             for each ( var range in this.getFlattenedRanges() ) {
-                var cell= __getCell(this._rootId, range[0], range[1])
+                var cell= __getCell(range)
                 if ( cell === undefined ) continue
 
                 cell._dumpRefs(comment)
@@ -386,7 +402,7 @@ console.log("_Atom.getValue, dirties:", Rd(_Atom.dirties), ", ranges:", rangesTo
 
         _Atom.prototype._getRangeValue= function( range ) {
 
-            var cell= __getCell(this._rootId, range[0], range[1])
+            var cell= __getCell(range)
             if ( cell === undefined ) return // undefined
 
             this._cellRefs[cell.getKey()]= true
@@ -568,7 +584,7 @@ console.log("_Atom.getValue, dirties:", Rd(_Atom.dirties), ", ranges:", rangesTo
             this.getRanges= function() {
                 var newRanges= []
                 for each ( var range in parent.getFlattenedRanges() ) {
-                    var cellValue= _getCell(this._atomId, range[0], range[1]).getValue()
+                    var cellValue= _getCell(this, range).getValue(this._atomId)
                     if ( cellValue !== undefined && cellValue == value ) {
                         newRanges.push(range)
                     }
@@ -594,7 +610,7 @@ console.log("_Atom.getValue, dirties:", Rd(_Atom.dirties), ", ranges:", rangesTo
             this.getValues= function() {
                 var values= [];
                 for each ( var range in parent.getFlattenedRanges() ) {
-                    values.push(_getCell(this._atomId, range[0], range[1]).getValue() + value);
+                    values.push(_getCell(this, range).getValue(this._atomId) + value);
                 }
                 return values;
             }
@@ -713,21 +729,6 @@ console.log("_Atom.getValue, dirties:", Rd(_Atom.dirties), ", ranges:", rangesTo
         C= function () root.addRange(Array.prototype.slice.call(arguments))
 
         var _cells= {};
-
-        Set= function ( dest, rawValue ) {
-            var value= rawValue;
-            if ( value instanceof _Atom ) {
-                value= function() rawValue.getValues()[0];
-            }
-            else if ( typeof value === 'number' || typeof value === 'string' ) {
-                value = function() rawValue;
-            }
-            var ranges= dest.getFlattenedRanges();
-            for each ( var range in ranges ) {
-                _getCell(dest._atomId, range[0], range[1]).setValue(value);
-//                _setCell('', range[0], range[1], new Cell(dest._atomId, range[0], range[1], value));
-            };
-        }
 
         DumpCells= function () {
             console.log(cells)

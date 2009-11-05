@@ -5,13 +5,13 @@ var test_ranges4= function() {
 
 //    console.warn(ranges.getValue());
 
-    Set(C('C5'), 5);
+    C('C5').setValue(5);
     console.log(C('C5').getValues());
 
-    Set(C('C6', 'C8'), 7);
+    C('C6', 'C8').setValue(7);
     console.log(C('C7').getValues());
     console.log(C('C7').add(5).getValues());
-    Set(C('C9'), C('C7').add(5));
+    C('C9').setValue(C('C7').add(5));
     console.log(C('C9').getValues());
 
     var ranges= C('C5','D8')
@@ -22,15 +22,15 @@ var test_ranges4= function() {
 
     var Inf= Number.MAX_VALUE
 
-    Set(C('C5'), "C5")
+    C('C5').setValue("C5")
 
-    Set(C('C6'), "C6")
-    Set(C('E6'), "Zuppi")
+    C('C6').setValue("C6")
+    C('E6').setValue("Zuppi")
 
-    Set(C('C7'), "Steppi")
-    Set(C('E7'), "HUHU!")
+    C('C7').setValue("Steppi")
+    C('E7').setValue("HUHU!")
 
-    Set(C('C8'), "C8")
+    C('C8').setValue("C8")
 
     var SVERWEIS= function ( searchRanges, value, col_i ) {
         // var sv= searchRanges.dump("init").crop(0, 0, 0, Inf).dump("cropped").grep(value).ofs(col_i, 0)
@@ -51,8 +51,12 @@ var test_ranges4= function() {
 
     console.warn("SV Ergebnis:", sv.getValues() )
     
-    Set(C('C6'), 'Steppi');
+    C('C6').setValue('Steppi');
     console.warn("SV Ergebnis:", sv.getValues() )
+    
+    console.log('all values C5:E8: ', C('C5', 'E8').getValues())
+    console.log('...crop(0,0,1,1): ', C('C5', 'E8').crop(0, 0, 1, 1).getValues())
+    console.log('...ofs(1,1): ', C('C5', 'E8').crop(0, 0, 1, 1).ofs(1,1).getValues())
     
 /*
     var v2= C('C5', 'C6').XsetValue(5).addRange('C6', 'C7').Xadd(1)
