@@ -118,14 +118,6 @@ var test_ranges= function() {
 
     console.warn("SV Ergebnis:", sv.getValue() )
 
-//    console.log("SV valueDeps:", Rd(sv.valueDeps()))
-//    console.log("SV cellRefs:", Rd(sv.cellRefs()))
-//    C(2, 6)._dumpRefs("2,6");
-//    C(4, 6)._dumpRefs("4,6");
-
-    console.warn("GREP valueDeps:", GREP.valueDepsAsString())
-    console.warn("C6 valueDeps:", C6.valueDepsAsString())
-
     // sv.value aendern. jetzt muss grep neu gemacht werden
     C6
         ._dumpCellRefs("C6")
