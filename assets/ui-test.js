@@ -6,6 +6,7 @@ jQuery(function($) {
     
     console.log('C5: ', C('C5').getValues());
 
+    C('C5').setValue(1)
     C('C6', 'C8').setValue(function() this.ofs(0, -1).getValue() + 1)
 
     console.log('C7: ', C('C7').getValue());
