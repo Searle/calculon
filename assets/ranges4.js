@@ -172,12 +172,13 @@ console.debug("_flatten using slow")
             if ( this._cellRange === undefined ) this._cellRange= root.addRange( [this._x, this._y] )
             var value= this._valueFn.apply(this._cellRange)
             if ( value instanceof _Atom ) {
-                if (this._resolving) {
+                if ( this._resolving ) {
                     console.error('Recursion detected')
 
                     // FIXME: should we return null or undefined here?
                     // choosed null here to distinguish from undefined cell (see add() etc.)
                     return null
+                    // throw "CellValueRecursion"
                 }
                 this._resolving= true;
                 value= value.getValue()
