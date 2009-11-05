@@ -142,19 +142,20 @@ console.debug("_flatten using slow")
 
             this._x= x
             this._y= y
-            this._atomId= atom._atomId;
-            this._rootAtomId= atom._rootId;
+            this._atomId= atom._atomId
+            this._rootAtomId= atom._rootId
 
-            this._atomRefs= {};
+            this._atomRefs= {}
 
-            this._fn_value= undefined;
-            this._cellRange= undefined;
+            this._fn_value= undefined
+            this._cellRange= undefined
         }
 
         Cell.prototype.initialized= function() this._fn_value !== undefined
 
         Cell.prototype.setValue= function(fn_value) {
             this._fn_value= fn_value
+
             // mark all referers as dirty
             this.dirty();
         }
@@ -173,7 +174,9 @@ console.debug("_flatten using slow")
 
         Cell.prototype.dirty= function() {
             for (var atomId in this._atomRefs) {
-                console.debug(atomId)
+
+console.debug("Cell.dirty: atomid=" + atomId)
+
                 atoms[atomId].dirty();
             }
         }
