@@ -57,6 +57,8 @@ var test_ranges= function() {
     _test('grep("C5")', function() C('B1', 'E9').grep('C5').getValue(), 'C5')
     _test('ofs(1,1)', function() C('B1', 'E9').ofs(1,1).getValue(), 'C2')
     _test('ofs(20,20)', function() C('B1', 'E9').ofs(20,20).getValue(), undefined)
+
+    _test('relTo(addRef)', function() C('A2').addRel(C('B1', 'E9').relTo(C('A1'))).getValues(), C('B2', 'E10').getValues(), _compareArray)
 }
 
 var test_sverweis= function() {

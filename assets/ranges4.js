@@ -511,6 +511,71 @@ console.debug("_Atom.dirty: add", this._atomId, rangesToString([range]), atomId)
 
 
 // =============================================================================
+//      RelTo extends _Atom
+// =============================================================================
+
+        var _RelTo= function( parent, source ) {
+            _Atom.call(this, parent)
+
+            var fixLength= function(ranges, length) {
+                if (length === 1) return ranges
+                for (var i= 1; i < length; i++) ranges.push(ranges[0]);
+            }
+
+            this.getRanges= function() {
+                var sourceRanges= source.getRanges()
+                var destRanges= parent.getRanges()
+
+                if (sourceRanges.length === 1) fixLength(sourceRanges, destRanges.length)
+                if (destRanges.length === 1) fixLength(destRanges, sourceRanges.length)
+                if (sourceRanges.length !== destRanges.length) return []
+
+                var ranges= []
+                for (var i in destRanges) {
+                    ranges.push([
+                        destRanges[i][0] - sourceRanges[i][0],
+                        destRanges[i][1] - sourceRanges[i][1],
+                        destRanges[i][2] - sourceRanges[i][0],
+                        destRanges[i][3] - sourceRanges[i][1],
+                    ])
+                }
+                return ranges
+            }
+        }
+
+        _Atom.extend('relTo', _RelTo, function(source) new _RelTo(this, source))
+
+
+// =============================================================================
+//      AddRel extends _Atom
+// =============================================================================
+
+        var _AddRel= function( parent, rel ) {
+            _Atom.call(this, parent)
+
+            this.getRanges= function() {
+                var sourceRanges= parent.getRanges()
+                var relRanges= rel.getRanges()
+
+                var ranges= []
+                for (var i = 0; i < relRanges.length; i++) {
+                    var j= i % sourceRanges.length
+                    ranges.push([
+                        sourceRanges[j][0] + relRanges[i][0],
+                        sourceRanges[j][1] + relRanges[i][1],
+                        sourceRanges[j][0] + relRanges[i][2],
+                        sourceRanges[j][1] + relRanges[i][3],
+                    ])
+
+                }
+                return ranges
+            }
+        }
+
+        _Atom.extend('addRel', _AddRel, function(rel) new _AddRel(this, rel))
+
+
+// =============================================================================
 //      Flatten extends _Atom
 //      NEEDED?
 // =============================================================================
