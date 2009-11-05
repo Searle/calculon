@@ -1,6 +1,4 @@
 
-console.debug= function() {}
-
 var _test= function(title, fn, expected, compare) {
     if ( typeof compare === 'undefined' ) {
         compare= function(result) result == expected
@@ -16,196 +14,54 @@ var _test= function(title, fn, expected, compare) {
     }
 }
 
+var _compareArray= function(a, b) {
+    if (a.length !== b.length) return false
+    for (var i in a) {
+        if (a[i] !== b[i]) return false
+    }
+    return true
+}
+
 var test_SetGet= function() {
     C('A1').setValue(1);
     _test('C(A1).getValue()', function() C('A1').getValue(), 1)
+    _test('C(A1).add(5).getValue()', function() C('A1').add(5).getValue(), 6)
     C('A2', 'A10').setValue(function() this.ofs(0, -1).getValue() + 1);
     _test('C(A2).getValue() setValue returns value', function() C('A2').getValue(), 2)
     _test('C(A10).getValue() setValue returns value', function() C('A10').getValue(), 10)
     C('A2', 'A10').setValue(function() this.ofs(0, -1).add(1));
     _test('C(A2).getValue() setValue returns atom', function() C('A2').getValue(), 2)
     _test('C(A10).getValue() setValue returns atom', function() C('A10').getValue(), 10)
-}
-
-test_SetGet()
-
-
-
-var test_ranges4= function() {
-
-//    var ranges= C('C5').XsetValue(5)
-
-//    console.warn(ranges.getValue());
-
-    C('C5').setValue(5);
-    console.log('C5: ', C('C5').getValues());
-
-    C('C6', 'C8').setValue(function() this.ofs(0, -1).getValue() + 1)
-
-    console.log('C7: ', C('C7').getValue());
-    console.log('C7 + 5: ', C('C7').add(5).getValues());
-    C('C9').setValue(C('C7').add(5));
-    console.log('C9: ', C('C9').getValues());
-
-    var ranges= C('C5','D8')
-    ranges.dump("ranges")
-
-    var newranges= ranges.addRange('C3', 'D4')
-    newranges.dump("newranges")
-
-    var Inf= Number.MAX_VALUE
-
-    C('C5').setValue("C5")
-
-    C('C6').setValue("C6")
-    C('E6').setValue("Zuppi")
-
-    C('C7').setValue("Steppi")
-    C('E7').setValue("HUHU!")
-
-    C('C8').setValue("C8")
-
-    var SVERWEIS= function ( searchRanges, value, col_i ) {
-        // var sv= searchRanges.dump("init").crop(0, 0, 0, Inf).dump("cropped").grep(value).ofs(col_i, 0)
-        // sv= sv.grep(value)          // geht???
-        // sv= sv.dump("grepped")      // geht nicht??? oder jetzt doch? hmm
-        // return sv
-
-        // ofs ist evt falsch, wenn sich col_i innerhalb von searchRanges befinden muss
-
-        // return searchRanges.crop(0, 0, 0, Inf).grep(value)
-        GREP= searchRanges.crop(0, 0, 0, Inf).grep(value);
-        return GREP.ofs(col_i, 0)
-
-        return searchRanges.crop(0, 0, 0, Inf).grep(value).ofs(col_i, 0)
-    }
-
-    var sv= SVERWEIS(newranges, "Steppi", 2); // .dump("sverweis Steppi")
-
-    console.warn("SV Ergebnis:", sv.getValues() )
-    
-    C('C6').setValue('Steppi');
-    console.warn("SV Ergebnis:", sv.getValues() )
-    
-    console.log('all values C5:E8: ', C('C5', 'E8').getValues())
-    console.log('...crop(0,0,1,1): ', C('C5', 'E8').crop(0, 0, 1, 1).getValues())
-    console.log('...ofs(1,1): ', C('C5', 'E8').crop(0, 0, 1, 1).ofs(1,1).getValues())
-    
-/*
-    var v2= C('C5', 'C6').XsetValue(5).addRange('C6', 'C7').Xadd(1)
-    // 6, 6, 1
-    
-    var v_a= C('C5', 'C6').XsetValue(5);
-    var v_b= C('C7', 'C8').XsetValue(6);
-    var v_ab= v_a.addRange(v_b);
-    console.log(v_ab.getValues())
-    // 5,5,6,6
-    
-    Set(['C1:D4', 'J6:K8'], function() {....})
-    
-
-    var a= C('C7', 'C8').setValue(6)
-//    C('C5', 'C6').XsetValue(5).addRange('C7', 'C8').getValues() // 5, 5, 6, null
-    C('C5', 'C6').XsetValue(5).addRange(a).getValues() // 5, 5, 6, 6
-
-*/
-
+    C('A1').setValue('1');
+    _test('C(A2).getValue() first cell is a string', function() C('A2').getValue(), '11')
+    _test('C(A10).getValue() first cell is a string', function() C('A10').getValue(), '1111111111')
 }
 
 var test_ranges= function() {
-
-    var newranges= ranges.addRange('C3', 'D4')
-    newranges.dump("newranges")
-
-    var Inf= Number.MAX_VALUE
-
-            C('C5').setValue("C5")
-
-    var C6= C('C6').setValue("C6")
-            C('E6').setValue("Zuppi")
-
-            C('C7').setValue("Steppi")
-            C('E7').setValue("HUHU!")
-
-            C('C8').setValue("C8")
-
-//    DumpCells()
-
-    var SVERWEIS= function ( searchRanges, value, col_i ) {
-        // var sv= searchRanges.dump("init").crop(0, 0, 0, Inf).dump("cropped").grep(value).ofs(col_i, 0)
-        // sv= sv.grep(value)          // geht???
-        // sv= sv.dump("grepped")      // geht nicht??? oder jetzt doch? hmm
-        // return sv
-
-        // ofs ist evt falsch, wenn sich col_i innerhalb von searchRanges befinden muss
-
-        // return searchRanges.crop(0, 0, 0, Inf).grep(value)
-        GREP= searchRanges.crop(0, 0, 0, Inf).grep(value);
-        return GREP.ofs(col_i, 0)
-
-        return searchRanges.crop(0, 0, 0, Inf).grep(value).ofs(col_i, 0)
+    var expected= [];
+    for (var row= 1; row < 10; row++) {
+        for each (var col in ['B', 'C', 'D', 'E']) {
+            C(col + row).setValue(col + row)
+            expected.push(col + row)
+        }
     }
-
-    var sv= SVERWEIS(newranges, "Steppi", 2); // .dump("sverweis Steppi")
-
-    console.warn("SV Ergebnis:", sv.getValue() )
-
-//    console.log("SV valueDeps:", Rd(sv.valueDeps()))
-//    console.log("SV cellRefs:", Rd(sv.cellRefs()))
-//    C(2, 6)._dumpRefs("2,6");
-//    C(4, 6)._dumpRefs("4,6");
-
-    console.warn("GREP valueDeps:", GREP.valueDepsAsString())
-    console.warn("C6 valueDeps:", C6.valueDepsAsString())
-
-    // sv.value aendern. jetzt muss grep neu gemacht werden
-    C6
-        ._dumpCellRefs("C6")
-        // .dirty()
-        .setValue("Steppi")
-
-    console.warn("SV Ergebnis:", sv.getValue() )
-    console.warn("SV Ergebnis:", sv.getValue() )
-
-            C('H1').setValue(6)
-            C('H2').setValue(17)
-
-    // H3 = H1 + H2 + 5
-
-    // Fehler: "add" ist deklarativ
-
-            C('H3').setValue(C('H1').add(C('H2')).add(V(5)))
-
-    console.warn("H1 Ergebnis:", C('H1').getValue() )
-    console.warn("H2 Ergebnis:", C('H2').getValue() )
-    console.warn("H3 Ergebnis:", C('H3').getValue() )
-
-    var V8= V(8)
-    var cv= V8.setValue(10).add(13);
-    var cv2= V8.setValue(20)
-    console.warn("cv Ergebnis:", cv.getValue() )
-
-    // console.log("Ergebnis:", SVERWEIS(ranges, "Steppi", 2) .dump("sverweis Steppi") .value() )
-    // console.log("Ergebnis:", SVERWEIS(ranges, "Steppi2", 2).dump("sverweis Steppi2").value() )
-
-/*
-    A1= 1
-    A2= 2
-    B1= Cell(A1, A2)
-    B2= 3
-
-    B1.getValue()
-*/
-
+    _test('getValues("B1:E9")', function() C('B1', 'E9').getValues(), expected, _compareArray)
+    _test('grep("C5")', function() C('B1', 'E9').grep('C5').getValue(), 'C5')
+    _test('ofs(1,1)', function() C('B1', 'E9').ofs(1,1).getValue(), 'C2')
+    _test('ofs(20,20)', function() C('B1', 'E9').ofs(20,20).getValue(), undefined)
 }
 
-var test_let= function() {
-    let x= 1
-    var ar= [ [ 1, 2], [3, 4], [5, 6] ]
-    for each ( let [x, y] in ar ) console.log("let test:", x, y)
+var test_sverweis= function() {
+    var SVERWEIS= function ( searchRanges, value, col_i ) searchRanges.crop(0, 0, 0, Number.MAX_VALUE).grep(value).ofs(col_i, 0)
+    _test('SVERWEIS("B1:E9", "B6", 2)', function() SVERWEIS(C('B1', 'E9'), 'B6', 2).getValues(), ['D6'], _compareArray)
+    C('B3').setValue('B6')
+    _test('SVERWEIS("B1:E9", "B6", 2) (2)', function() SVERWEIS(C('B1', 'E9'), 'B6', 2).getValues(), ['D3', 'D6'], _compareArray)
+    _test('SVERWEIS("B1:E9", "D3", 2)', function() SVERWEIS(C('B1', 'E9'), 'D3', 2).getValues(), [], _compareArray)
 }
 
-// test_ranges()
-test_ranges4()
-// test_let()
+
+test_SetGet()
+test_ranges()
+test_sverweis()
+
 

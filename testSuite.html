@@ -9,6 +9,8 @@
 
         for each (var name in ['log', 'warn', 'error'].filter(function(x) !console[x])) console[name] = function() {};
 
+        console.debug= function() {}
+
         READABLE_TOSTRING= true
     </script>
     <script src="assets/readable.js"></script>
