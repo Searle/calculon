@@ -1,6 +1,4 @@
 
-if ( typeof console === 'undefined' ) console= { log: function () {}, warn: function () {}, error: function () {} }
-
 jQuery.Plugin= function(name, constructor, defaultSettings) {
 
     var instanceNo= 0

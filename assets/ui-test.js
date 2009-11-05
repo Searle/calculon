@@ -3,7 +3,7 @@ jQuery(function($) {
 
     $('#sheet1').CalculonSheet();
 
-    
+    C('C5').setValue(5);
     console.log('C5: ', C('C5').getValues());
 
     C('C5').setValue(1)
