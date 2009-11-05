@@ -142,19 +142,20 @@ console.debug("_flatten using slow")
 
             this._x= x
             this._y= y
-            this._atomId= atom._atomId;
-            this._rootAtomId= atom._rootId;
+            this._atomId= atom._atomId
+            this._rootAtomId= atom._rootId
 
-            this._atomRefs= {};
+            this._atomRefs= {}
 
-            this._fn_value= undefined;
-            this._cellRange= undefined;
+            this._fn_value= undefined
+            this._cellRange= undefined
         }
 
         Cell.prototype.initialized= function() this._fn_value !== undefined
 
         Cell.prototype.setValue= function(fn_value) {
             this._fn_value= fn_value
+
             // mark all referers as dirty
             this.dirty();
         }
@@ -173,7 +174,9 @@ console.debug("_flatten using slow")
 
         Cell.prototype.dirty= function() {
             for (var atomId in this._atomRefs) {
-                console.debug(atomId)
+
+console.debug("Cell.dirty: atomid=" + atomId)
+
                 atoms[atomId].dirty();
             }
         }
@@ -414,8 +417,7 @@ console.debug("_Atom.dirty: add", this._atomId, rangesToString([range]), atomId)
 //      The following are tracked chainable methods of _Atom.
 //      - Implemented as derivations of _Atom, so each method (part of the chain)
 //        memoizes it's state. Kind of like currying
-//      - Not pure functional (might change cell values)
-//      - Return value of 'getRanges' is pure functionial
+//      - Pure functional
 //
 // *****************************************************************************
 // =============================================================================
@@ -621,8 +623,6 @@ console.debug("_Atom.dirty: add", this._atomId, rangesToString([range]), atomId)
 //      Interface (window context)
 // =============================================================================
 
-        // Ranges= function() new _Atom
-
         var root= new _Atom
 
         C= function () root.addRange(Array.prototype.slice.call(arguments))
@@ -631,12 +631,9 @@ console.debug("_Atom.dirty: add", this._atomId, rangesToString([range]), atomId)
             console.log(cells)
         }
 
-        // V= function () new _Atom
         V= function ( value ) (new _Atom).addRange( 1, 1 ).setValue(value)
 
         A= function ( i ) atoms[i]
         DA= function ( i ) atoms[i].dump("ATOM")
 
 })()
-
-
