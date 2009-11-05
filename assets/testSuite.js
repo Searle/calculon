@@ -26,6 +26,8 @@ var test_SetGet= function() {
     C('A1').setValue(1);
     _test('C(A1).getValue()', function() C('A1').getValue(), 1)
     _test('C(A1).add(5).getValue()', function() C('A1').add(5).getValue(), 6)
+    _test('C(A1).setValue(C(A1).add(5)).getValue() (recursion test)', function() C('A1').setValue(function() C('A1').add(5)).getValue(), undefined)
+    C('A1').setValue(1);
     C('A2', 'A10').setValue(function() this.ofs(0, -1).getValue() + 1);
     _test('C(A2).getValue() setValue returns value', function() C('A2').getValue(), 2)
     _test('C(A10).getValue() setValue returns value', function() C('A10').getValue(), 10)
@@ -57,7 +59,12 @@ var test_sverweis= function() {
     C('B3').setValue('B6')
     _test('SVERWEIS("B1:E9", "B6", 2) (2 results)', function() SVERWEIS(C('B1', 'E9'), 'B6', 2).getValues(), ['D3', 'D6'], _compareArray)
     _test('SVERWEIS("B1:E9", "D3", 2)', function() SVERWEIS(C('B1', 'E9'), 'D3', 2).getValues(), [], _compareArray)
-    _test('SVERWEIS("B1:E9", "B1 || B6", 2) (value is function)', function() SVERWEIS(C('B1', 'E9'), function(v) v==='B1' || v==='B6', 2).getValues(), ['D1', 'D3', 'D6'], _compareArray)
+    _test(
+        'SVERWEIS("B1:E9", "B1 || B6", 2) (value is function)',
+        function() SVERWEIS(C('B1', 'E9'), function(v) v === 'B1' || v === 'B6', 2).getValues(),
+        ['D1', 'D3', 'D6'],
+        _compareArray
+    )
 }
 
 
