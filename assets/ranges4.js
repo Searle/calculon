@@ -528,7 +528,7 @@ console.debug("_Atom.getValue, dirties:", Rd(_Atom.dirties), ", ranges:", ranges
 
             this.getRanges= function() {
                 var ranges= []
-                for each ( let [ ox0, ox1, oy0, oy1 ] in parent.getRanges() ) {
+                for each ( let [ ox0, oy0, ox1, oy1 ] in parent.getRanges() ) {
                     var newRange= [ ox0, oy0, ox1, oy1 ]= [
                         ox0 + x0,
                         oy0 + y0,
