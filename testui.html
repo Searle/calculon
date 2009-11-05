@@ -5,12 +5,9 @@
     <title>calculon</title>
 
     <link rel="stylesheet" type="text/css" href="assets/ui.css" />
+    <script src="assets/common.js"></script>
 
     <script>
-        if ( typeof console === "undefined" ) console = {};
-
-        for each (var name in ['log', 'warn', 'error'].filter(function(x) !console[x])) console[name] = function() {};
-
         READABLE_TOSTRING= true
     </script>
 
