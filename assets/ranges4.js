@@ -138,10 +138,10 @@ console.debug("_flatten using slow")
 //      - Uses local variable "root"
 // =============================================================================
 
-        var Cell= function(atom, x, y) {
+        var Cell= function(atom, coord) {
 
-            this._x= x
-            this._y= y
+            this._x= coord[0]
+            this._y= coord[1]
             this._atomId= atom._atomId
             this._rootAtomId= atom._rootId
 
@@ -151,6 +151,7 @@ console.debug("_flatten using slow")
 
             // An _Atom containing the cell range (size 1 x 1)
             this._cellRange= undefined
+            this._resolving= false;
         }
 
         Cell.prototype.initialized= function() this._valueFn !== undefined
@@ -168,9 +169,20 @@ console.debug("_flatten using slow")
 
             // remember calling atom as referer to this cell
             this._atomRefs[atomId]= true;
-            if ( this._cellRange === undefined ) this._cellRange= root.addRange([ this._x, this._y ])
-            var value= this._valueFn.apply(this._cellRange, arguments)
-            if ( value instanceof _Atom ) return value.getValue()
+            if ( this._cellRange === undefined ) this._cellRange= root.addRange( [this._x, this._y] )
+            var value= this._valueFn.apply(this._cellRange)
+            if ( value instanceof _Atom ) {
+                if (this._resolving) {
+                    console.error('Recursion detected')
+
+                    // FIXME: should we return null or undefined here?
+                    // choosed null here to distinguish from undefined cell (see add() etc.)
+                    return null
+                }
+                this._resolving= true;
+                value= value.getValue()
+                this._resolving= false;
+            }
             return value
         }
 
@@ -199,7 +211,7 @@ console.debug("Cell.dirty: atomid=" + atomId)
             var key= coord[0] + ':' + coord[1]
             var cell= cells[key]
             if ( cell === undefined ) {
-                cell= cells[key]= new Cell(atom, coord[0], coord[1])
+                cell= cells[key]= new Cell(atom, coord)
             }
             return cell
         }
@@ -524,14 +536,14 @@ console.debug("_Atom.dirty: add", this._atomId, rangesToString([range]), atomId)
 
             if ( !_isFunction(checkFn) ) {
                 var value= checkFn;
-                checkFn= function(v) value == v
+                checkFn= function(v) value === v
             }
 
             this.getRanges= function() {
                 var newRanges= []
                 for each ( var range in parent.getFlattenedRanges() ) {
                     var cellValue= _getCellValue(this._atomId, range)
-                    if ( cellValue !== undefined && checkFn(cellValue) ) {
+                    if ( cellValue !== undefined && checkFn.call(range, cellValue) ) {
                         newRanges.push(range)
                     }
                 }
@@ -554,7 +566,16 @@ console.debug("_Atom.dirty: add", this._atomId, rangesToString([range]), atomId)
             this.getValues= function() {
                 var values= [];
                 for each ( var range in parent.getFlattenedRanges() ) {
-                    values.push(_getCellValue(this._atomId, range) + value);
+                    var cellValue= _getCellValue(this._atomId, range)
+                    if (cellValue === undefined) {
+                        values.push(value)
+                        continue
+                    }
+                    if (cellValue === null) {
+                        values.push(null)
+                        continue
+                    }
+                    values.push(cellValue + value)
                 }
                 return values;
             }
