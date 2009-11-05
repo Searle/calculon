@@ -573,6 +573,7 @@ console.debug("_Atom.dirty: add", this._atomId, rangesToString([range]), atomId)
 //      Grep extends _Atom
 // =============================================================================
 
+        // TODO: call fn_check with cell's range as this?
         var _Grep= function ( parent, fn_check ) {
             _Atom.call(this, parent)
 
