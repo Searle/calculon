@@ -13,23 +13,26 @@
         error: 3,
     }
 
-    console.level= function(level) {
-        if (typeof level !== 'undefined') {
-            _level= _levelMap[level] || level
+    if (typeof console === 'undefined') console= {}
+
+    // remember console's old log functions
+    var oldFns= {}
+    for (var level in _levelMap) {
+        oldFns[level]= console[level] || function() {}
+    }
+
+    console.logLevel= function(level) {
+        if (level in _levelMap) {
+            _level= _levelMap[level]
+            // overwrite masked console functions
+            for (var l in _levelMap) {
+                console[l]= _levelMap[l] <= _level ? oldFns[l] : function() {}
+            }
+            oldFns.debug.call(console, 'Log level set to "' + level + '". To change level again call "console.logLevel([new log level])"')
         }
         return _level
     }
 
-    console.level('debug')
-
-    for (var level in _levelMap) {
-        console[level]= (function(level) {
-            var origFn= console[level] || function() {}
-            level= _levelMap[level]
-            return function() {
-                if (level <= _level) origFn.apply(console, arguments)
-            }
-        })(level)
-    }
+    console.logLevel('info')
 
 })()
