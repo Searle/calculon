@@ -22,10 +22,6 @@
 
     console.level('debug')
 
-    var Log= function(level, fn, args) {
-        if (level <= _level) fn.call(firefoxConsole, args)
-    }
-
     for (var level in _levelMap) {
         console[level]= (function(level) {
             var origFn= console[level] || function() {}
