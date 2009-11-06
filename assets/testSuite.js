@@ -10,7 +10,7 @@ var _test= function(title, fn, expected, compare) {
     }
     else {
         console.error('Failed: ' + title)
-        console.info('Got: ', result, 'Expected: ', expected)
+        console.log('Got: ', result, 'Expected: ', expected)
     }
 }
 
@@ -21,6 +21,8 @@ var _compareArray= function(a, b) {
     }
     return true
 }
+
+var _cmpNum= function(a, b) a < b ? -1 : a === b ? 0 : 1
 
 var test_SetGet= function() {
     C('A1').setValue(1);
@@ -95,6 +97,27 @@ var test_cellops= function() {
     _test('C("B1:F10").add(3)', function() C('B1', 'F10').add(3).getValues(), expected2P3, _compareArray)
     _test('C("B1:F10").add(1).add(2)', function() C('B1', 'F10').add(1).add(2).getValues(), expected2P3, _compareArray)
     _test('C("B1:F10").add(3).sum()', function() C('B1', 'F10').add(3).sum().getValue(), sum + 3 * expected2.length)
+
+    _test('C("B1:E1").add(100).ofs(0,1)', function() C('B1', 'E1').add(100).ofs(0,1).getValues(), [4, 5, 6, 7], _compareArray)
+    _test('C("B1:E1").add(100).ofs(0,1).add(200)', function() C('B1', 'E1').add(100).ofs(0,1).add(200).getValues(), [204, 205, 206, 207], _compareArray)
+    _test(
+        'C("B1:E1").add(100).ofs(0,1).add(200).ofs(0,-1)',
+        function() C('B1', 'E1').add(100).ofs(0,1).add(200).ofs(0,-1).getValues(),
+        [100, 101, 102, 103],
+        _compareArray
+    )
+
+    _test('C("B1:E9").prod()', function() C('B1', 'E9').prod().getValue(), 0)
+    _test('C("B2:E9")', function() C('B2', 'E9').getValues(), expected.filter(function(v) v > 3), _compareArray)
+    _test('C("B2:E9").addRange("C1:E9")', function() C('B2', 'E9').addRange('C1', 'E9').getValues().sort(_cmpNum), expected.filter(function(v) v), _compareArray)
+    var prod= 1
+    expected.filter(function(v) v).map(function(v) prod*= v)
+    _test('C("B2:E9").prod()', function() C('B2', 'E9').prod().getValue(), prod / 6)
+    _test('C("B2:E9").addRange("C1:E9").prod()', function() C('B2', 'E9').addRange('C1', 'E9').prod().getValue(), prod)
+    _test('C("B2:F10").prod()', function() C('B2', 'F10').prod().getValue(), prod / 6)
+    _test('C("B2:F10").addRange("C1:F10").prod()', function() C('B2', 'F10').addRange('C1', 'F10').prod().getValue(), prod)
+
+    _test('C("B1").add(1).addRange("B1:E9").prod()', function() C('B1').add(1).addRange('B1', 'E9').prod().getValue(), prod)
 }
 
 var test_sverweis= function() {
