@@ -10,7 +10,7 @@ var _test= function(title, fn, expected, compare) {
     }
     else {
         console.error('Failed: ' + title)
-        console.log('Got: ', result, 'Expected: ', expected)
+        console.info('Got: ', result, 'Expected: ', expected)
     }
 }
 
@@ -45,14 +45,22 @@ var test_SetGet= function() {
     _test('C(A10).getValue() first cell is a string', function() C('A10').getValue(), '1111111111')
 }
 
-var test_ranges= function() {
-    var expected= [];
+var _test_init= function(fn) {
+    var i= 0
+    var expected= []
+    if (fn === undefined) fn= function() i++
     for (var row= 1; row < 10; row++) {
         for each (var col in ['B', 'C', 'D', 'E']) {
-            C(col + row).setValue(col + row)
-            expected.push(col + row)
+            var value= fn(col, row)
+            C(col + row).setValue(value)
+            expected.push(value)
         }
     }
+    return expected
+}
+
+var test_ranges= function() {
+    var expected= _test_init(function(c, r) c + r)
     _test('getValues("B1:E9")', function() C('B1', 'E9').getValues(), expected, _compareArray)
     _test('grep("C5")', function() C('B1', 'E9').grep('C5').getValue(), 'C5')
     _test('ofs(1,1)', function() C('B1', 'E9').ofs(1,1).getValue(), 'C2')
@@ -61,7 +69,37 @@ var test_ranges= function() {
     _test('relTo(addRef)', function() C('A2').addRel(C('B1', 'E9').relTo(C('A1'))).getValues(), C('B2', 'E10').getValues(), _compareArray)
 }
 
+var test_cellops= function() {
+    var expected= _test_init()
+    var sum= 0
+    expected.forEach(function(v) sum+= v)
+    var expectedP3= expected.map(function(v) v + 3)
+    _test('C("B1:E9")', function() C('B1', 'E9').getValues(), expected, _compareArray)
+    _test('C("B1:E9").sum()', function() C('B1', 'E9').sum().getValue(), sum)
+    _test('C("B1:E9").add(3)', function() C('B1', 'E9').add(3).getValues(), expectedP3, _compareArray)
+    _test('C("B1:E9").add(1).add(2)', function() C('B1', 'E9').add(1).add(2).getValues(), expectedP3, _compareArray)
+    _test('C("B1:E9").add(3).sum()', function() C('B1', 'E9').add(3).sum().getValue(), sum + 3 * expected.length)
+
+    var expected2= []
+    var i= 0
+    for (var row= 1; row < 11; row++) {
+        for each (var col in ['B', 'C', 'D', 'E']) {
+            expected2.push(expected[i++])
+        }
+        expected2.push(undefined)
+    }
+    var expected2P3= expected2.map(function(v) (v || 0) + 3)
+
+    _test('C("B1:F10")', function() C('B1', 'F10').getValues(), expected2, _compareArray)
+    _test('C("B1:F10").sum()', function() C('B1', 'F10').sum().getValue(), sum)
+    _test('C("B1:F10").add(3)', function() C('B1', 'F10').add(3).getValues(), expected2P3, _compareArray)
+    _test('C("B1:F10").add(1).add(2)', function() C('B1', 'F10').add(1).add(2).getValues(), expected2P3, _compareArray)
+    _test('C("B1:F10").add(3).sum()', function() C('B1', 'F10').add(3).sum().getValue(), sum + 3 * expected2.length)
+}
+
 var test_sverweis= function() {
+    _test_init(function(c, r) c + r)
+
     var SVERWEIS= function ( searchRanges, value, col_i ) searchRanges.crop(0, 0, 0, Number.MAX_VALUE).grep(value).ofs(col_i, 0)
     _test('SVERWEIS("B1:E9", "B6", 2)', function() SVERWEIS(C('B1', 'E9'), 'B6', 2).getValues(), ['D6'], _compareArray)
     C('B3').setValue('B6')
@@ -78,6 +116,7 @@ var test_sverweis= function() {
 
 test_SetGet()
 test_ranges()
+test_cellops()
 test_sverweis()
 
 

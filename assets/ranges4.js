@@ -266,7 +266,7 @@ console.debug('_Atom.new:', this._atomId, this.name, parent ? '(parent:' + paren
         //      Instance Methods
         // -----------------------------------------------------------------------------
 
-        _Atom.prototype.getRanges= function() this.parent ? this.parent.getRanges() : []
+        _Atom.prototype.getRanges= function() this._parent ? this._parent.getRanges() : []
 
         _Atom.prototype.name= ''
 
@@ -337,7 +337,7 @@ console.debug("_Atom.dirty: add", this._atomId, rangesToString([range]), atomId)
 
             var values= []
             for each ( var range in ranges ) {
-                values.push(_getCellValue(this._atomId, range))
+                values.push(this._getCellValue(range))
             }
             return values
         }
@@ -346,6 +346,27 @@ console.debug("_Atom.dirty: add", this._atomId, rangesToString([range]), atomId)
 
             // TODO: is that ok?
             return this.getValues()[0];
+        }
+
+        // returns cell's value, should be overwritten by modifying atom heirs
+        _Atom.prototype._getCellValue= function(cellRange) {
+            if (this._parent === undefined) {
+                return _getCellValue(this._rootId, cellRange)
+            }
+            return this._parent._getCellValue(cellRange)
+        }
+
+        // returns true if cell is in atom's region collection
+        _Atom.prototype._ownCell= function(cellRange) {
+            var x= cellRange[0]
+            var y= cellRange[1]
+            for each (var range in this.getRanges()) {
+                if (
+                    range[0] <= x && range[2] >= x &&
+                    range[1] <= y && range[3] >= y
+                ) return true
+            }
+            return false
         }
 
         _Atom.prototype.setValue= function( newValue ) {
@@ -621,7 +642,7 @@ console.debug("_Atom.dirty: add", this._atomId, rangesToString([range]), atomId)
 
 
 // =============================================================================
-//      Add extends _Atom
+//      Add extends _Atom, adds given value to each cell
 // =============================================================================
 
         var _Add= function ( parent, value ) {
@@ -629,25 +650,103 @@ console.debug("_Atom.dirty: add", this._atomId, rangesToString([range]), atomId)
 
             if ( value instanceof _Atom ) value= value.getValue()
 
-            this.getValues= function() {
-                var values= [];
-                for each ( var range in parent.getFlattenedRanges() ) {
-                    var cellValue= _getCellValue(this._atomId, range)
-                    if (cellValue === undefined) {
-                        values.push(value)
-                        continue
-                    }
-                    if (cellValue === null) {
-                        values.push(null)
-                        continue
-                    }
-                    values.push(cellValue + value)
-                }
-                return values;
+            var superGetCellValue= this._getCellValue
+            this._getCellValue= function(cellRange) {
+                var cellValue= superGetCellValue.call(this, cellRange)
+                if (!this._ownCell(cellRange)) return cellValue
+                if (cellValue === undefined) return value
+                if (cellValue === null) return null
+                return cellValue + value
             }
         }
 
         _Atom.extend('add', _Add, function(value) new _Add(this, value))
+
+
+// =============================================================================
+//      Mult extends _Atom, multiplies every cell with given value
+// =============================================================================
+
+        var _Mult= function ( parent, value ) {
+            _Atom.call(this, parent)
+
+            if ( value instanceof _Atom ) value= value.getValue()
+
+            var superGetCellValue= this._getCellValue
+            this._getCellValue= function(cellRange) {
+                var cellValue= superGetCellValue.call(this, cellRange)
+                if (!this._ownCell(cellRange)) return cellValue
+                if (cellValue === undefined) return undefined
+                if (cellValue === null) return null
+                return cellValue * value
+            }
+        }
+
+        _Atom.extend('mult', _Mult, function(value) new _Mult(this, value))
+
+
+// =============================================================================
+//      Op extends _Atom, applies given function on every cell
+// =============================================================================
+
+        var _Op= function ( parent, fn ) {
+            _Atom.call(this, parent)
+
+            var superGetCellValue= this._getCellValue
+            this._getCellValue= function(cellRange) {
+                var cellValue= superGetCellValue.call(this, cellRange)
+                if (!this._ownCell(cellRange)) return cellValue
+                if (cellValue === null) return null
+                var cell= _getCell(range)
+                return fn.call(cell._cellRange, cellValue)
+            }
+        }
+
+        _Atom.extend('op', _Op, function(value) new _Op(this, value))
+
+
+// =============================================================================
+//      Sum extends _Atom, returns sum of all cells
+// =============================================================================
+
+        var _Sum= function ( parent ) {
+            _Atom.call(this, parent)
+
+            this.getValues= function() {
+                var value= 0;
+                for each ( var range in parent.getFlattenedRanges() ) {
+                    var cellValue= this._getCellValue(range)
+                    if (cellValue === undefined) continue
+                    if (cellValue === null) continue
+                    value+= cellValue
+                }
+                return [value];
+            }
+        }
+
+        _Atom.extend('sum', _Sum, function() new _Sum(this))
+
+
+// =============================================================================
+//      Prod extends _Atom, returns product of all cells
+// =============================================================================
+
+        var _Prod= function ( parent ) {
+            _Atom.call(this, parent)
+
+            this.getValues= function() {
+                var value= 1;
+                for each ( var range in parent.getFlattenedRanges() ) {
+                    var cellValue= this._getCellValue(range)
+                    if (cellValue === undefined) continue
+                    if (cellValue === null) continue
+                    value*= cellValue
+                }
+                return [value];
+            }
+        }
+
+        _Atom.extend('prod', _Prod, function() new _Prod(this))
 
 
 // =============================================================================
