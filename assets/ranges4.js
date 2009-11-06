@@ -38,7 +38,7 @@
             var cellToString= function( x, y ) "@ABCDEFGHIJKLMNOPQRSTUVWXYZ".substr(x, 1) + y
 
             var result= [];
-            for each ( range in ranges ) {
+            for each ( var range in ranges ) {
                 var cstr1= cellToString(range[0], range[1])
                 var cstr2= cellToString(range[2], range[3])
                 result.push(cstr1 == cstr2 ? cstr1 : cstr1 + ':' + cstr2)
