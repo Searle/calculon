@@ -123,6 +123,9 @@ var test_cellops= function() {
     _test('C("B2:F10").addRange("C1:F10").prod()', function() C('B2', 'F10').addRange('C1', 'F10').prod().getValue(), prod)
 
     _test('C("B1").add(1).addRange("B1:E9").prod()', function() C('B1').add(1).addRange('B1', 'E9').prod().getValue(), prod)
+    _test('C("B1:E9").grep(0)', function() C('B1', 'E9').grep(0).getValues(), [0], _compareArray)
+    _test('C("B1:E9").grep(0).set(1).addRange("B1:E9").prod()', function() C('B1', 'E9').grep(0).set(1).addRange('B1', 'E9').prod().getValue(), prod)
+    _test('C("B1")', function() C('B1').getValue(), 0)
 }
 
 var test_sverweis= function() {
