@@ -647,11 +647,11 @@ console.debug("_Atom.dirty: add", this._atomId, rangesToString([range]), atomId)
 
 
 // =============================================================================
-//      Set extends _Atom, sets each cell to given value
+//      SetCell modifies _Atom, sets each cell to given value and stores value in every cell
 // =============================================================================
 
-        var _Set= function ( value ) {
-//        var _Set= function ( parent, value ) {
+        var _SetCell= function ( value ) {
+//        var _SetCell= function ( parent, value ) {
 //            _Atom.call(this, parent)
 
             var ranges= this.getFlattenedRanges()
@@ -659,10 +659,28 @@ console.debug("_Atom.dirty: add", this._atomId, rangesToString([range]), atomId)
                 _getCell(this, range).setValue(value)
             }
 
+            return this.set(value)
+        }
+
+        _Atom.prototype.setCell= _SetCell
+//        _Atom.extend('setCell', _SetCell, function(value) new _SetCell(this, value))
+
+
+// =============================================================================
+//      Set modifiess _Atom, sets each cell to given value
+// =============================================================================
+
+        var _Set= function ( value ) {
+//        var _Set= function ( parent, value ) {
+//            _Atom.call(this, parent)
+
             // mask lower cellmodifications
             var superGetCellValue= this._getCellValue
             this._getCellValue= function(cellRange, cell) {
-                if (cell === undefined) cell= __getCell(cellRange)
+                // FIXME: do we need to create nonexistant cells with _getCell
+                // but we need to use resolve mechanism and recursion detection
+                // may be we should create V(value)
+                if (cell === undefined) cell= _getCell(this._atomId, cellRange)
                 return cell.resolveCellValue(this._atomId, value)
             }
             return this
@@ -750,8 +768,10 @@ console.debug("_Atom.dirty: add", this._atomId, rangesToString([range]), atomId)
             _Atom.call(this, parent)
 
             this.getValues= function() {
+                var ranges= parent.getFlattenedRanges()
+                if (ranges.length === 0) return [undefined]
                 var value= 0;
-                for each ( var range in parent.getFlattenedRanges() ) {
+                for each ( var range in ranges ) {
                     var cellValue= this._getCellValue(range)
                     if (cellValue === undefined) continue
                     if (cellValue === null) continue
@@ -772,8 +792,10 @@ console.debug("_Atom.dirty: add", this._atomId, rangesToString([range]), atomId)
             _Atom.call(this, parent)
 
             this.getValues= function() {
+                var ranges= parent.getFlattenedRanges()
+                if (ranges.length === 0) return [undefined]
                 var value= 1;
-                for each ( var range in parent.getFlattenedRanges() ) {
+                for each ( var range in ranges ) {
                     var cellValue= this._getCellValue(range)
                     if (cellValue === undefined) continue
                     if (cellValue === null) continue
