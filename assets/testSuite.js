@@ -1,13 +1,26 @@
+var _statistic= {
+    tests: 0,
+    failed: 0,
+    success: 0,
+}
+
+var showTimer= true
+
 var _test= function(title, fn, expected, compare) {
     if ( typeof compare === 'undefined' ) {
         compare= function(result) result === expected
     }
+    _statistic.tests++
+    if (showTimer) console.time('test time "' + title +'"')
     var result= fn();
+    if (showTimer) console.timeEnd('test time "' + title +'"')
     var success= compare(result, expected);
     if (success) {
+        _statistic.success++
         console.warn('Success: ' + title);
     }
     else {
+        _statistic.failed++
         console.error('Failed: ' + title)
         console.log('Got: ', result, 'Expected: ', expected)
     }
@@ -24,6 +37,7 @@ var _compareArray= function(a, b) {
 var _cmpNum= function(a, b) a < b ? -1 : a === b ? 0 : 1
 
 var test_SetGet= function() {
+    _test('C(A1).getValue() (undefined cell)', function() C('A1').getValue(), undefined)
     C('A1').setCell(1);
     _test('C(A1).getValue()', function() C('A1').getValue(), 1)
     _test('C(A1).add(5).getValue()', function() C('A1').add(5).getValue(), 6)
@@ -124,6 +138,16 @@ var test_cellops= function() {
 
     _test('C("B1").add(1).addRange("B1:E9").prod()', function() C('B1').add(1).addRange('B1', 'E9').prod().getValue(), prod)
     _test('C("B1:E9").grep(0)', function() C('B1', 'E9').grep(0).getValues(), [0], _compareArray)
+
+    // TODO: should this work without ...getValue()?
+    C('B1').setCell(0)
+    _test('C("B1").grep(C("B1").set(8))', function() C('B1').grep(C('B1').set(8).getValue()).getValues(), [], _compareArray)
+    C('B1').setCell(0)
+    _test('C("B1").grep(C("B1").setCell(8))', function() C('B1').grep(C('B1').setCell(8).getValue()).getValues(), [8], _compareArray)
+
+    C('B1').setCell(0)
+    _test('C("B1:E9").grep(0).set(1).grep(1).set(8)', function() C('B1', 'E9').grep(0).set(1).grep(1).set(8).getValues(), [8], _compareArray)
+    C('B1').setCell(0)
     _test('C("B1:E9").grep(0).set(1).addRange("B1:E9").prod()', function() C('B1', 'E9').grep(0).set(1).addRange('B1', 'E9').prod().getValue(), prod)
     _test('C("B1")', function() C('B1').getValue(), 0)
 }
@@ -144,10 +168,20 @@ var test_sverweis= function() {
     )
 }
 
+if (showTimer) console.time('all tests')
 
 test_SetGet()
 test_ranges()
 test_cellops()
 test_sverweis()
 
+if (showTimer) console.timeEnd('all tests')
 
+
+document.write(
+    '<table>' +
+    '<tr><td>Tests run:</td><td>' + _statistic.tests + '</td></tr>' +
+    '<tr><td>Success:</td><td>' + _statistic.success + ' (' + (Math.floor(_statistic.success / _statistic.tests * 1000)/10) + '%)</td></tr>' +
+    '<tr><td>Failed:</td><td>' + _statistic.failed + ' (' + (Math.floor(_statistic.failed / _statistic.tests * 1000)/10) + '%)</td></tr>' +
+    '</table>'
+)
