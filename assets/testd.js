@@ -5,14 +5,14 @@ var test_ranges4= function() {
 
 //    console.warn(ranges.getValue());
 
-    C('C5').setValue(5);
+    C('C5').set(5);
     console.log('C5: ', C('C5').getValues());
 
-    C('C6', 'C8').setValue(function() this.ofs(0, -1).getValue() + 1)
+    C('C6', 'C8').set(function() this.ofs(0, -1).getValue() + 1)
 
     console.log('C7: ', C('C7').getValue());
     console.log('C7 + 5: ', C('C7').add(5).getValues());
-    C('C9').setValue(C('C7').add(5));
+    C('C9').set(C('C7').add(5));
     console.log('C9: ', C('C9').getValues());
 
     var ranges= C('C5','D8')
@@ -23,15 +23,15 @@ var test_ranges4= function() {
 
     var Inf= Number.MAX_VALUE
 
-    C('C5').setValue("C5")
+    C('C5').set("C5")
 
-    C('C6').setValue("C6")
-    C('E6').setValue("Zuppi")
+    C('C6').set("C6")
+    C('E6').set("Zuppi")
 
-    C('C7').setValue("Steppi")
-    C('E7').setValue("HUHU!")
+    C('C7').set("Steppi")
+    C('E7').set("HUHU!")
 
-    C('C8').setValue("C8")
+    C('C8').set("C8")
 
     var SVERWEIS= function ( searchRanges, value, col_i ) {
         // var sv= searchRanges.dump("init").crop(0, 0, 0, Inf).dump("cropped").grep(value).ofs(col_i, 0)
@@ -52,7 +52,7 @@ var test_ranges4= function() {
 
     console.warn("SV Ergebnis:", sv.getValues() )
     
-    C('C6').setValue('Steppi');
+    C('C6').set('Steppi');
     console.warn("SV Ergebnis:", sv.getValues() )
     
     console.log('all values C5:E8: ', C('C5', 'E8').getValues())
@@ -72,7 +72,7 @@ var test_ranges4= function() {
     Set(['C1:D4', 'J6:K8'], function() {....})
     
 
-    var a= C('C7', 'C8').setValue(6)
+    var a= C('C7', 'C8').set(6)
 //    C('C5', 'C6').XsetValue(5).addRange('C7', 'C8').getValues() // 5, 5, 6, null
     C('C5', 'C6').XsetValue(5).addRange(a).getValues() // 5, 5, 6, 6
 
@@ -87,15 +87,15 @@ var test_ranges= function() {
 
     var Inf= Number.MAX_VALUE
 
-            C('C5').setValue("C5")
+            C('C5').set("C5")
 
-    var C6= C('C6').setValue("C6")
-            C('E6').setValue("Zuppi")
+    var C6= C('C6').set("C6")
+            C('E6').set("Zuppi")
 
-            C('C7').setValue("Steppi")
-            C('E7').setValue("HUHU!")
+            C('C7').set("Steppi")
+            C('E7').set("HUHU!")
 
-            C('C8').setValue("C8")
+            C('C8').set("C8")
 
 //    DumpCells()
 
@@ -122,27 +122,27 @@ var test_ranges= function() {
     C6
         ._dumpCellRefs("C6")
         // .dirty()
-        .setValue("Steppi")
+        .set("Steppi")
 
     console.warn("SV Ergebnis:", sv.getValue() )
     console.warn("SV Ergebnis:", sv.getValue() )
 
-            C('H1').setValue(6)
-            C('H2').setValue(17)
+            C('H1').set(6)
+            C('H2').set(17)
 
     // H3 = H1 + H2 + 5
 
     // Fehler: "add" ist deklarativ
 
-            C('H3').setValue(C('H1').add(C('H2')).add(V(5)))
+            C('H3').set(C('H1').add(C('H2')).add(V(5)))
 
     console.warn("H1 Ergebnis:", C('H1').getValue() )
     console.warn("H2 Ergebnis:", C('H2').getValue() )
     console.warn("H3 Ergebnis:", C('H3').getValue() )
 
     var V8= V(8)
-    var cv= V8.setValue(10).add(13);
-    var cv2= V8.setValue(20)
+    var cv= V8.set(10).add(13);
+    var cv2= V8.set(20)
     console.warn("cv Ergebnis:", cv.getValue() )
 
     // console.log("Ergebnis:", SVERWEIS(ranges, "Steppi", 2) .dump("sverweis Steppi") .value() )

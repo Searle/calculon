@@ -147,7 +147,7 @@ console.debug("_flatten using slow")
 
             this._atomRefs= {}
 
-            this._valueFn= undefined
+            this._value= undefined
 
             // An _Atom containing the cell range (size 1 x 1)
             this._cellRange= undefined
@@ -156,8 +156,8 @@ console.debug("_flatten using slow")
 
         Cell.prototype.initialized= function() this._valueFn !== undefined
 
-        Cell.prototype.setValue= function( valueFn ) {
-            this._valueFn= valueFn
+        Cell.prototype.setValue= function( value ) {
+            this._value= value
 
             // mark all referers as dirty
             this.dirty();
@@ -165,25 +165,32 @@ console.debug("_flatten using slow")
 
         // FIXME: do we need caller's atomId or caller's rootAtomId here?
         Cell.prototype.getValue= function( atomId ) {
-            if ( this._valueFn === undefined ) return // undefined
+            return this.resolveCellValue( atomId, this._value )
+        }
+
+        Cell.prototype.resolveCellValue= function( atomId, value ) {
+            if ( value === undefined ) return // undefined
 
             // remember calling atom as referer to this cell
             this._atomRefs[atomId]= true;
             if ( this._cellRange === undefined ) this._cellRange= root.addRange( [this._x, this._y] )
-            var value= this._valueFn.apply(this._cellRange)
-            if ( value instanceof _Atom ) {
-                if ( this._resolving ) {
-                    console.error('Recursion detected')
 
-                    // FIXME: should we return null or undefined here?
-                    // choosed null here to distinguish from undefined cell (see add() etc.)
-                    return null
-                    // throw "CellValueRecursion"
-                }
-                this._resolving= true;
-                value= value.getValue()
-                this._resolving= false;
+            if ( this._resolving ) {
+                console.error('Recursion detected')
+
+                // FIXME: should we return null or undefined here?
+                // choosed null here to distinguish from undefined cell (see add() etc.)
+                return null
+                // throw "CellValueRecursion"
             }
+            this._resolving= true;
+
+            if (_isFunction(value)) value= value.apply(this._cellRange)
+            if ( value instanceof _Atom ) {
+                value= value.getValue()
+            }
+
+            this._resolving= false;
             return value
         }
 
@@ -367,21 +374,6 @@ console.debug("_Atom.dirty: add", this._atomId, rangesToString([range]), atomId)
                 ) return true
             }
             return false
-        }
-
-        _Atom.prototype.setValue= function( newValue ) {
-            var value= newValue;
-            if ( value instanceof _Atom ) {
-                value= function() newValue.getValues()[0];
-            }
-            else if ( typeof value === 'number' || typeof value === 'string' ) {
-                value = function() newValue;
-            }
-            var ranges= this.getFlattenedRanges();
-            for each ( var range in ranges ) {
-                _getCell(this, range).setValue(value);
-            };
-            return this;
         }
 
         _Atom.prototype.dump= function( comment ) {
@@ -639,6 +631,32 @@ console.debug("_Atom.dirty: add", this._atomId, rangesToString([range]), atomId)
         }
 
         _Atom.extend('grep', _Grep, function(value) new _Grep(this, value))
+
+
+// =============================================================================
+//      Set extends _Atom, sets each cell to given value
+// =============================================================================
+
+        var _Set= function ( parent, value ) {
+            _Atom.call(this, parent)
+
+            var ranges= this.getFlattenedRanges()
+            for each ( var range in ranges ) {
+                _getCell(this, range).setValue(value)
+            }
+
+            // mask lower cellmodifications
+            var superGetCellValue= this._getCellValue
+            this._getCellValue= function(cellRange) {
+                if (!this._ownCell(cellRange)) {
+                    return superGetCellValue.call(this, cellRange)
+                }
+                var cell= __getCell(cellRange)
+                return cell.resolveCellValue(this._atomId, value)
+            }
+        }
+
+        _Atom.extend('set', _Set, function(value) new _Set(this, value))
 
 
 // =============================================================================

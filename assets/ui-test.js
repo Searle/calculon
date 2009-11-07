@@ -3,14 +3,14 @@ jQuery(function($) {
 
     $('#sheet1').CalculonSheet();
 
-    C('C5').setValue(5);
+    C('C5').set(5);
     console.log('C5: ', C('C5').getValues());
 
-    C('C6', 'C8').setValue(function() this.ofs(0, -1).add(1))
+    C('C6', 'C8').set(function() this.ofs(0, -1).add(1))
 
     console.log('C7: ', C('C7').getValue());
     console.log('C7 + 5: ', C('C7').add(5).getValues());
-    C('C9').setValue(C('C7').add(5));
+    C('C9').set(C('C7').add(5));
     console.log('C9: ', C('C9').getValues());
 
 

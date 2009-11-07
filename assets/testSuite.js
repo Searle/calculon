@@ -1,4 +1,3 @@
-
 var _test= function(title, fn, expected, compare) {
     if ( typeof compare === 'undefined' ) {
         compare= function(result) result === expected
@@ -25,24 +24,36 @@ var _compareArray= function(a, b) {
 var _cmpNum= function(a, b) a < b ? -1 : a === b ? 0 : 1
 
 var test_SetGet= function() {
-    C('A1').setValue(1);
+    C('A1').set(1);
     _test('C(A1).getValue()', function() C('A1').getValue(), 1)
     _test('C(A1).add(5).getValue()', function() C('A1').add(5).getValue(), 6)
 
+    _test('C(A1).set(1).getValue()', function() C('A1').set(1).getValue(), 1)
+    _test('C(A1).set(1).add(1).getValue()', function() C('A1').set(1).add(1).getValue(), 2)
+    _test('C(A1).add(1).set(1).getValue()', function() C('A1').add(1).set(1).getValue(), 1)
+    _test('C(A1).add(1).set(1).add(1).getValue()', function() C('A1').add(1).set(1).add(1).getValue(), 2)
+
     // disable error console temporarily
     var _console_error= console.error
-    console.error= function() {}
-    _test('C(A1).setValue(C(A1).add(5)).getValue() (recursion test)', function() C('A1').setValue(function() C('A1').add(5)).getValue(), null)
+//    console.error= function() {}
+
+    _test('C(A1).set(C(A1)).getValue() (recursion test)', function() C('A1').set(C('A1')).getValue(), null)
+    _test('C(A1).set(C(A1).add(5)).getValue() (recursion test)', function() C('A1').set(C('A1').add(5)).getValue(), null)
+    _test('C(A1).set(C(A2).set(C(A1))).getValue() (recursion test)', function() C('A1').set(C('A2').set(C('A1'))).getValue(), null)
+    C('A1').set(C('A2'))
+    C('A2').set(C('A1'))
+    _test('C(A1).set(C(A2).set(C(A1))) (recursion test2)', function() C('A1').getValue(), null)
+
     console.error= _console_error
 
-    C('A1').setValue(1);
-    C('A2', 'A10').setValue(function() this.ofs(0, -1).getValue() + 1);
-    _test('C(A2).getValue() setValue returns value', function() C('A2').getValue(), 2)
-    _test('C(A10).getValue() setValue returns value', function() C('A10').getValue(), 10)
-    C('A2', 'A10').setValue(function() this.ofs(0, -1).add(1));
-    _test('C(A2).getValue() setValue returns atom', function() C('A2').getValue(), 2)
-    _test('C(A10).getValue() setValue returns atom', function() C('A10').getValue(), 10)
-    C('A1').setValue('1');
+    C('A1').set(1);
+    C('A2', 'A10').set(function() this.ofs(0, -1).getValue() + 1);
+    _test('C(A2).getValue() set returns value', function() C('A2').getValue(), 2)
+    _test('C(A10).getValue() set returns value', function() C('A10').getValue(), 10)
+    C('A2', 'A10').set(function() this.ofs(0, -1).add(1));
+    _test('C(A2).getValue() set returns atom', function() C('A2').getValue(), 2)
+    _test('C(A10).getValue() set returns atom', function() C('A10').getValue(), 10)
+    C('A1').set('1');
     _test('C(A2).getValue() first cell is a string', function() C('A2').getValue(), '11')
     _test('C(A10).getValue() first cell is a string', function() C('A10').getValue(), '1111111111')
 }
@@ -54,7 +65,7 @@ var _test_init= function(fn) {
     for (var row= 1; row < 10; row++) {
         for each (var col in ['B', 'C', 'D', 'E']) {
             var value= fn(col, row)
-            C(col + row).setValue(value)
+            C(col + row).set(value)
             expected.push(value)
         }
     }
@@ -125,7 +136,7 @@ var test_sverweis= function() {
 
     var SVERWEIS= function ( searchRanges, value, col_i ) searchRanges.crop(0, 0, 0, Number.MAX_VALUE).grep(value).ofs(col_i, 0)
     _test('SVERWEIS("B1:E9", "B6", 2)', function() SVERWEIS(C('B1', 'E9'), 'B6', 2).getValues(), ['D6'], _compareArray)
-    C('B3').setValue('B6')
+    C('B3').set('B6')
     _test('SVERWEIS("B1:E9", "B6", 2) (2 results)', function() SVERWEIS(C('B1', 'E9'), 'B6', 2).getValues(), ['D3', 'D6'], _compareArray)
     _test('SVERWEIS("B1:E9", "D3", 2)', function() SVERWEIS(C('B1', 'E9'), 'D3', 2).getValues(), [], _compareArray)
     _test(
