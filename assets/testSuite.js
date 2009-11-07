@@ -4,16 +4,24 @@ var _statistic= {
     success: 0,
 }
 
-var showTimer= true
+var _showTimer= true // && false
+
+var _timerStart= function() {}
+var _timerEnd= function() {}
+
+if (_showTimer) {
+    _timerStart= console.time
+    _timerEnd= console.timeEnd
+}
 
 var _test= function(title, fn, expected, compare) {
     if ( typeof compare === 'undefined' ) {
         compare= function(result) result === expected
     }
     _statistic.tests++
-    if (showTimer) console.time('test time "' + title +'"')
+    _timerStart('test time "' + title +'"')
     var result= fn();
-    if (showTimer) console.timeEnd('test time "' + title +'"')
+    _timerEnd('test time "' + title +'"')
     var success= compare(result, expected);
     if (success) {
         _statistic.success++
@@ -168,14 +176,14 @@ var test_sverweis= function() {
     )
 }
 
-if (showTimer) console.time('all tests')
+if (_showTimer) console.profile('all tests')
 
 test_SetGet()
 test_ranges()
 test_cellops()
 test_sverweis()
 
-if (showTimer) console.timeEnd('all tests')
+if (_showTimer) console.profileEnd('all tests')
 
 
 document.write(
