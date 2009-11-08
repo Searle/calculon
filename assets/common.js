@@ -34,5 +34,6 @@
     }
 
     console.logLevel('info')
+    console.Error= oldFns.error
 
 })()
