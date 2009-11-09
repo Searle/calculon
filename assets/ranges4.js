@@ -142,7 +142,6 @@ console.debug("_flatten using slow")
 
             this._x= coord[0]
             this._y= coord[1]
-            this._atomId= atom._atomId
             this._rootAtomId= atom._rootId
 
             this._atomRefs= {}
@@ -160,6 +159,10 @@ console.debug("_flatten using slow")
         }
 
         Cell.prototype.getValue= function( atom ) {
+            // FIXME: is this legal?
+            if ( atom === undefined ) {
+                return atoms[this._rootAtomId]._resolveCellValue( [this._x, this._y], this._value )
+            }
             // remember calling atom as referer to this cell
             this._atomRefs[atom._atomId]= true;
 
