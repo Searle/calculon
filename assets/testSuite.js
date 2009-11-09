@@ -21,6 +21,12 @@
         _timerEnd= console.timeEnd
     }
 
+    var _range= function (begin, end) {
+        for (let i = begin; i < end; ++i) {
+            yield i
+        }
+    }
+
     var _compareArray= function(a, b) {
         if (a.length !== b.length) return false
         for (var i in a) {
@@ -29,12 +35,15 @@
         return true
     }
 
-    var _cmpNum= function(a, b) a < b ? -1 : a === b ? 0 : 1
+    // we should usually compare sorted arrays, because range's getValue()'s order is not determined
+    var _compareSortedArray= function(a, b) _compareArray(a.slice().sort(), b.slice().sort())
+
+//    var _cmpNum= function(a, b) a < b ? -1 : a === b ? 0 : 1
 
     var _test= function(title, fn, expected, compare) {
         if ( typeof compare === 'undefined' ) {
             if (Object.prototype.toString.call(expected) === '[object Array]') {
-                compare= _compareArray
+                compare= _compareSortedArray
             }
             else {
                 compare= function(result) result === expected
@@ -65,6 +74,7 @@
         }
     }
 
+/*
     var _test_init= function(fn) {
         var i= 0
         var expected= []
@@ -78,6 +88,7 @@
         }
         return expected
     }
+*/
 
     var test_SetGet= function() {
         // various set/get with constants
@@ -163,7 +174,7 @@
             8
         )
 
-        // test cache invalidation and string operations
+        // test cache invalidation on cell change and string operations
         C('A1').setCell(1)
         C('A2', 'A5').setCell(function() this.ofs(0,-1).add(1))
         _test('C(A2) (first cell is a number)', function() C('A2').getValue(), 2)
@@ -174,10 +185,63 @@
     }
 
     var test_ranges= function() {
-        var expected= _test_init(function(c, r) c + r)
-        _test('C(B1:E9).grep(C5)', function() C('B1', 'E9').grep('C5').getValue(), 'C5')
-        _test('C(B1:E9).ofs(1,1)', function() C('B1', 'E9').ofs(1,1).getValue(), 'C2')
-        _test('C(B1:E9).ofs(20,20)', function() C('B1', 'E9').ofs(20,20).getValue(), undefined)
+        for each (let r in _range(1, 10)) for each (let c in ['B','C','D','E']) C(c + r).setCell(c + r)
+        var expected= [ c + r for (c in ['B','C','D','E']) for (r in _range(1,10))]
+        // get range values
+        _test(
+            'C(B1:D3)',
+            function() C('B1', 'D3').getValues(),
+            ['B1', 'B2', 'B3', 'C1', 'C2', 'C3', 'D1', 'D2', 'D3']
+        )
+        // add an already included cell
+        _test(
+            'C(B1:D3).addRange(C(B1))',
+            function() C('B1', 'D3').addRange(C('B1')).getValues(),
+            ['B1', 'B2', 'B3', 'C1', 'C2', 'C3', 'D1', 'D2', 'D3']
+        )
+        // add a not included cell
+        _test(
+            'C(B1:D3).addRange(C(D5))',
+            function() C('B1', 'D3').addRange(C('D5')).getValues(),
+            ['B1', 'B2', 'B3', 'C1', 'C2', 'C3', 'D1', 'D2', 'D3', 'D5']
+        )
+        // add the same range again
+        _test(
+            'C(B1:D3).addRange(C(B1:D3))',
+            function() C('B1', 'D3').addRange(C('B1', 'D3')).getValues(),
+            ['B1', 'B2', 'B3', 'C1', 'C2', 'C3', 'D1', 'D2', 'D3']
+        )
+        // add an overlapping range
+        _test(
+            'C(B1:D3).addRange(C(C2:E4))',
+            function() C('B1', 'D3').addRange(C('C2', 'E4')).getValues(),
+            ['B1', 'B2', 'B3', 'C1', 'C2', 'C3', 'C4', 'D1', 'D2', 'D3', 'D4', 'E2', 'E3', 'E4']
+        )
+        // add an overlapping range and mask new cells
+        _test(
+            'C(B1:D3).addRange(C(B2:E4)).range(C(B1:D3))',
+            function() C('B1', 'D3').addRange(C('C2', 'E4')).range(C('B1', 'D3')).getValues(),
+            ['B1', 'B2', 'B3', 'C1', 'C2', 'C3', 'D1', 'D2', 'D3']
+        )
+        // add an overlapping range - setting the added range should have no effect
+        _test(
+            'C(B1:D3).addRange(C(C2:E4).set(0)) (set() should have no effect)',
+            function() C('B1', 'D3').addRange(C('C2', 'E4').set(0)).getValues(),
+            ['B1', 'B2', 'B3', 'C1', 'C2', 'C3', 'C4', 'D1', 'D2', 'D3', 'D4', 'E2', 'E3', 'E4']
+        )
+        // add an overlapping range - setting cells in added range should change resulting values
+        _test(
+            'C(B1:D3).addRange(C(C2:E4).setCell(0)) (setCell() should have effect)',
+            function() C('B1', 'D3').addRange(C('C2', 'E4').setCell(0)).getValues(),
+            ['B1', 'B2', 'B3', 'C1', 0, 0, 0, 'D1', 0, 0, 0, 0, 0, 0]
+        )
+        // reinit changed cells
+        for each (let r in _range(1, 10)) for each (let c in ['B','C','D','E']) C(c + r).setCell(c + r)
+
+        _test('C(B1:E9).grep(C5)', function() C('B1', 'E9').grep('C5').getValues(), ['C5'])
+        _test('C(B1:E9).grep(C5).ofs(1,1)', function() C('B1', 'E9').grep('C5').ofs(1,1).getValues(), ['D6'])
+        _test('C(B1:D3).ofs(1,1)', function() C('B1', 'D3').ofs(1,1).getValues(), ['C2', 'D2', 'E2', 'C3', 'D3', 'E3', 'C4', 'D4', 'E4'])
+        _test('C(B1:E9).ofs(20,20)', function() C('B1', 'E9').ofs(20,20).getValues(), [undefined for (i in _range(0,36))])
 
         _test(
             'C(A2).addRel(C(B1:E9).relTo(C(A1)))',
@@ -187,7 +251,9 @@
     }
 
     var test_cellops= function() {
-        var expected= _test_init()
+        var i= 0
+        for each (let r in _range(1, 10)) for each (let c in ['B','C','D','E']) C(c + r).setCell(i++)
+        var expected= [ i for each ( i in _range(0, 36) ) ]
         var sum= 0
         expected.forEach(function(v) sum+= v)
         var expectedP3= expected.map(function(v) v + 3)
@@ -223,7 +289,7 @@
 
         _test('C("B1:E9").prod()', function() C('B1', 'E9').prod().getValue(), 0)
         _test('C("B2:E9")', function() C('B2', 'E9').getValues(), expected.filter(function(v) v > 3))
-        _test('C("B2:E9").addRange("C1:E9")', function() C('B2', 'E9').addRange('C1', 'E9').getValues().sort(_cmpNum), expected.filter(function(v) v))
+        _test('C("B2:E9").addRange("C1:E9")', function() C('B2', 'E9').addRange('C1', 'E9').getValues(), expected.filter(function(v) v))
         var prod= 1
         expected.filter(function(v) v).map(function(v) prod*= v)
         _test('C("B2:E9").prod()', function() C('B2', 'E9').prod().getValue(), prod / 6)
@@ -248,7 +314,7 @@
     }
 
     var test_sverweis= function() {
-        _test_init(function(c, r) c + r)
+        for each (let r in _range(1, 10)) for each (let c in ['B','C','D','E']) C(c + r).setCell(c + r)
 
         var SVERWEIS= function ( searchRanges, value, col_i ) searchRanges.crop(0, 0, 0, Number.MAX_VALUE).grep(value).ofs(col_i, 0)
         _test('SVERWEIS("B1:E9", "B6", 2)', function() SVERWEIS(C('B1', 'E9'), 'B6', 2).getValues(), ['D6'])

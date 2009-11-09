@@ -27,7 +27,7 @@
         // FIXME: Naive Implementierung, kann kein AA1 etc
         var stringToCell= function( str ) {
             var x= "@ABCDEFGHIJKLMNOPQRSTUVWXYZ".indexOf(str.substr(0, 1))
-            if ( x < 0 ) throw "NoValidCellName"
+            if ( x < 0 ) throw "NoValidCellName: [" + str + "]"
             var y= parseInt(str.substr(1), 10)
             if ( isNaN(y) || y <= 0 ) throw "NoValidCellName: [" + str + "]"
             return [ x, y ]
