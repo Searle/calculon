@@ -5,7 +5,13 @@
         success: 0,
     }
 
-    var _showTimer= true && false
+    var _params= {}
+    document.location.search.substr(1).split('&').forEach(function(option) {
+        var p= option.split('=', 2)
+        _params[p[0]]= p[1] === undefined ? true : p[1]
+    })
+
+    var _showTimer= _params.profiler
 
     var _timerStart= function() {}
     var _timerEnd= function() {}
