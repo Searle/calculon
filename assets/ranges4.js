@@ -153,8 +153,6 @@ console.debug("_flatten using slow")
         this._value= undefined
     }
 
-    Cell.prototype.initialized= function() this._valueFn !== undefined
-
     Cell.prototype.setValue= function( value ) {
         this._value= value
 
@@ -163,10 +161,12 @@ console.debug("_flatten using slow")
     }
 
     Cell.prototype.getValue= function( atom ) {
+
         // FIXME: is this legal?
         if ( atom === undefined ) {
             return atoms[this._rootAtomId]._resolveCellValue( [ this._x, this._y ], this._value )
         }
+
         // remember calling atom as referer to this cell
         this._atomRefs[atom._atomId]= true
 
@@ -367,6 +367,9 @@ console.debug("_Atom.dirty: add", this._atomId, rangesToString([range]), atomId)
     _Atom.prototype._recursiveSave= function( fn ) {
         if ( this.__recursionSemaphore ) {
             console.Error("Recursion detected")
+
+            // FIXME: return // undefined ?
+            // or throw "xx" ?
             return null
         }
         this.__recursionSemaphore= true
