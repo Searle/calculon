@@ -165,7 +165,7 @@ console.debug("_flatten using slow")
     Cell.prototype.getValue= function( atom ) {
         // FIXME: is this legal?
         if ( atom === undefined ) {
-            return atoms[this._rootAtomId]._resolveCellValue( [this._x, this._y], this._value )
+            return atoms[this._rootAtomId]._resolveCellValue( [ this._x, this._y ], this._value )
         }
         // remember calling atom as referer to this cell
         this._atomRefs[atom._atomId]= true
@@ -358,7 +358,9 @@ console.debug("_Atom.dirty: add", this._atomId, rangesToString([range]), atomId)
                 return v
             })
         }
-        if ( value instanceof _Atom ) return this._recursiveSave(function() value.getValue())
+        if ( value instanceof _Atom ) {
+            return this._recursiveSave(function() value.getValue())
+        }
         return value
     }
 
@@ -593,7 +595,7 @@ console.debug("_Atom.dirty: add", this._atomId, rangesToString([range]), atomId)
 
         // makes one-element-array ranges as long as reference
         var fixLength= function(ranges, reference) {
-            return [ ranges[0] for (i in reference) ]
+            return [ ranges[0] for ( i in reference ) ]
         }
 
         this.getRanges= function() {
@@ -606,8 +608,8 @@ console.debug("_Atom.dirty: add", this._atomId, rangesToString([range]), atomId)
 
             return [
                 [
-                    dest - sourceRanges[i][j] for ([j, dest] in destRange)
-                ] for ([i, destRange] in destRanges) 
+                    dest - sourceRanges[i][j] for ( [ j, dest ] in destRange )
+                ] for ( [ i, destRange ] in destRanges ) 
             ]
         }
     }
@@ -664,7 +666,7 @@ console.debug("_Atom.dirty: add", this._atomId, rangesToString([range]), atomId)
 //      Grep extends _Atom
 // =============================================================================
 
-    // TODO: call fn_check with cell's range as this?
+    // TODO: call checkFn with cell's range as this?
     var _Grep= function ( parent, checkFn ) {
         _Atom.call(this, parent)
 
@@ -698,8 +700,7 @@ console.debug("_Atom.dirty: add", this._atomId, rangesToString([range]), atomId)
 
     var _SetCell= function ( value ) {
 
-    var ranges= this.getFlattenedRanges()
-        for each ( var range in ranges ) {
+        for each ( var range in this.getFlattenedRanges() ) {
             _getCell(this, range).setValue(value)
         }
 
@@ -719,6 +720,7 @@ console.debug("_Atom.dirty: add", this._atomId, rangesToString([range]), atomId)
 // =============================================================================
 
     var _Set= function ( value ) {
+
         // mask lower cellmodifications
         this._getCellValue= function( cellRange, cell ) {
             return this._resolveCellValue(cellRange, value)
@@ -742,6 +744,7 @@ console.debug("_Atom.dirty: add", this._atomId, rangesToString([range]), atomId)
         if ( value instanceof _Atom ) value= value.getValue()
 
         var superGetCellValue= this._getCellValue
+
         this._getCellValue= function( cellRange, cell ) {
             var cellValue= superGetCellValue.call(this, cellRange, cell)
             if ( cellValue === undefined ) return value
@@ -767,6 +770,7 @@ console.debug("_Atom.dirty: add", this._atomId, rangesToString([range]), atomId)
         if ( value instanceof _Atom ) value= value.getValue()
 
         var superGetCellValue= this._getCellValue
+
         this._getCellValue= function( cellRange, cell ) {
             var cellValue= superGetCellValue.call(this, cellRange, cell)
             if ( cellValue === undefined ) return undefined
@@ -816,7 +820,7 @@ console.debug("_Atom.dirty: add", this._atomId, rangesToString([range]), atomId)
 
         this.getValues= function() {
             var ranges= parent.getFlattenedRanges()
-            if ( ranges.length === 0 ) return [undefined]
+            if ( ranges.length === 0 ) return [ undefined ]
             var value= 0
             for each ( var range in ranges ) {
                 var cellValue= this._getCellValue(range)
@@ -824,7 +828,7 @@ console.debug("_Atom.dirty: add", this._atomId, rangesToString([range]), atomId)
                 if ( cellValue === null )      continue
                 value+= cellValue
             }
-            return [value]
+            return [ value ]
         }
     }
 
@@ -840,7 +844,7 @@ console.debug("_Atom.dirty: add", this._atomId, rangesToString([range]), atomId)
 
         this.getValues= function() {
             var ranges= parent.getFlattenedRanges()
-            if ( ranges.length === 0 ) return [undefined]
+            if ( ranges.length === 0 ) return [ undefined ]
             var value= 1
             for each ( var range in ranges ) {
                 var cellValue= this._getCellValue(range)
@@ -848,7 +852,7 @@ console.debug("_Atom.dirty: add", this._atomId, rangesToString([range]), atomId)
                 if ( cellValue === null )      continue
                 value*= cellValue
             }
-            return [value]
+            return [ value ]
         }
     }
 
