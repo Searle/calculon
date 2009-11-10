@@ -1,19 +1,21 @@
 
 var test_ranges4= function() {
 
+console.logLevel('log')
+
 //    var ranges= C('C5').XsetValue(5)
 
 //    console.warn(ranges.getValue());
 
     C('C5').setCell(5);
-    console.log('C5: ', C('C5').getValues());
+//    console.log('C5: ', C('C5').getValues());
 
     C('C6', 'C8').setCell(function() this.ofs(0, -1).getValue() + 1)
 
-    console.log('C7: ', C('C7').getValue());
-    console.log('C7 + 5: ', C('C7').add(5).getValues());
+//    console.log('C7: ', C('C7').getValue());
+//    console.log('C7 + 5: ', C('C7').add(5).getValues());
     C('C9').setCell(C('C7').add(5));
-    console.log('C9: ', C('C9').getValues());
+//    console.log('C9: ', C('C9').getValues());
 
     var ranges= C('C5','D8')
     ranges.dump("ranges")
@@ -53,6 +55,8 @@ var test_ranges4= function() {
     console.warn("SV Ergebnis:", sv.getValues() )
     
     C('C6').setCell('Steppi');
+
+console.log('C6:', C('C6').getValue())
     console.warn("SV Ergebnis:", sv.getValues() )
     
     console.log('all values C5:E8: ', C('C5', 'E8').getValues())
