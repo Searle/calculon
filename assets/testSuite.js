@@ -113,6 +113,9 @@
         _test('var a= C(A2); a.setCell(a) (recursion)', function() {var a= C('A2'); return a.setCell(a).getValue()}, null) // "5" for separate set-atom
         _test('var a= C(A2); a.setCell(a.set(7)) (recursion)', function() {var a= C('A2'); return a.setCell(a.set(7)).getValue()}, null) // "7" for separate set-atom
         _test('var a= C(A2).set(5); var b= a.add(7); [a,b]', function() {var a= C('A2').set(5); var b=a.add(7); return [a.getValue(), b.getValue()]}, [12, 12], _compareArray) // [5,12] for separate set-atom
+        // restore cell values
+        C('A1').setCell(5)
+        C('A2').setCell(C('A1'))
         _test('C(A1).setCell(C(A2)) (recursion)', function() C('A1').setCell(C('A2')).getValue(), null)
         C('A1').setCell(10)
         _test('C(A1).set(C(A1).set(1)) (no recursion)', function() C('A1').set(C('A1').set(1)).getValue(), 1)

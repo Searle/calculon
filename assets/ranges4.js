@@ -1,6 +1,10 @@
 
 (function () {
 
+        // if set to true, methods like set, add will modify the current atom
+        // if set to false, those methods will create a new atom with current as parent
+        var __modifyAtoms= true
+
 // TODO: Auf 3D (sheets) ausbauen
 
 // =============================================================================
@@ -478,8 +482,6 @@ console.debug("_Atom.dirty: add", this._atomId, rangesToString([range]), atomId)
         var _AddRange= function( parent, arg ) {
             _Atom.call(this, parent)
 
-// console.debug(parent, ranges,arg)
-
             this.getRanges= function() {
                 return __addRange(parent.getRanges(), arg)
             }
@@ -696,8 +698,6 @@ console.debug("_Atom.dirty: add", this._atomId, rangesToString([range]), atomId)
 // =============================================================================
 
         var _SetCell= function ( value ) {
-//        var _SetCell= function ( parent, value ) {
-//            _Atom.call(this, parent)
 
             var ranges= this.getFlattenedRanges()
             for each ( var range in ranges ) {
@@ -707,8 +707,12 @@ console.debug("_Atom.dirty: add", this._atomId, rangesToString([range]), atomId)
             return this.set(value)
         }
 
-        _Atom.prototype.setCell= _SetCell
-//        _Atom.extend('setCell', _SetCell, function(value) new _SetCell(this, value))
+        if (__modifyAtoms) {
+            _Atom.prototype.setCell= _SetCell
+        }
+        else {
+            _Atom.extend('setCell', _SetCell, function(value) _SetCell.call(new _Atom(this), value))
+        }
 
 
 // =============================================================================
@@ -716,9 +720,6 @@ console.debug("_Atom.dirty: add", this._atomId, rangesToString([range]), atomId)
 // =============================================================================
 
         var _Set= function ( value ) {
-//        var _Set= function ( parent, value ) {
-//            _Atom.call(this, parent)
-
             // mask lower cellmodifications
             this._getCellValue= function( cellRange, cell ) {
                 return this._resolveCellValue(cellRange, value)
@@ -726,8 +727,12 @@ console.debug("_Atom.dirty: add", this._atomId, rangesToString([range]), atomId)
             return this
         }
 
-        _Atom.prototype.set= _Set
-//        _Atom.extend('set', _Set, function(value) new _Set(this, value))
+        if (__modifyAtoms) {
+            _Atom.prototype.set= _Set
+        }
+        else {
+            _Atom.extend('set', _Set, function(value) _Set.call(new _Atom(this), value))
+        }
 
 
 // =============================================================================
@@ -735,9 +740,6 @@ console.debug("_Atom.dirty: add", this._atomId, rangesToString([range]), atomId)
 // =============================================================================
 
         var _Add= function ( value ) {
-//        var _Add= function ( parent, value ) {
-//            _Atom.call(this, parent)
-
             if ( value instanceof _Atom ) value= value.getValue()
 
             var superGetCellValue= this._getCellValue
@@ -750,8 +752,12 @@ console.debug("_Atom.dirty: add", this._atomId, rangesToString([range]), atomId)
             return this
         }
 
-        _Atom.prototype.add= _Add
-//        _Atom.extend('add', _Add, function(value) new _Add(this, value))
+        if (__modifyAtoms) {
+            _Atom.prototype.add= _Add
+        }
+        else {
+            _Atom.extend('add', _Add, function(value) _Add.call(new _Atom(this), value))
+        }
 
 
 // =============================================================================
@@ -759,9 +765,6 @@ console.debug("_Atom.dirty: add", this._atomId, rangesToString([range]), atomId)
 // =============================================================================
 
         var _Mult= function ( value ) {
-//        var _Mult= function ( parent, value ) {
-//            _Atom.call(this, parent)
-
             if ( value instanceof _Atom ) value= value.getValue()
 
             var superGetCellValue= this._getCellValue
@@ -774,8 +777,12 @@ console.debug("_Atom.dirty: add", this._atomId, rangesToString([range]), atomId)
             return this
         }
 
-        _Atom.prototype.mult= _Mult
-//        _Atom.extend('mult', _Mult, function(value) new _Mult(this, value))
+        if (__modifyAtoms) {
+            _Atom.prototype.mult= _Mult
+        }
+        else {
+            _Atom.extend('mult', _Mult, function(value) _Mult.call(new _Atom(this), value))
+        }
 
 
 // =============================================================================
@@ -783,9 +790,6 @@ console.debug("_Atom.dirty: add", this._atomId, rangesToString([range]), atomId)
 // =============================================================================
 
         var _Op= function ( fn ) {
-//        var _Op= function ( parent, fn ) {
-//            _Atom.call(this, parent)
-
             var superGetCellValue= this._getCellValue
             this._getCellValue= function( cellRange, cell ) {
                 var cellValue= superGetCellValue.call(this, cellRange, cell)
@@ -796,8 +800,12 @@ console.debug("_Atom.dirty: add", this._atomId, rangesToString([range]), atomId)
             return this
         }
 
-        _Atom.prototype.op= _Op
-//        _Atom.extend('op', _Op, function(value) new _Op(this, value))
+        if (__modifyAtoms) {
+            _Atom.prototype.op= _Op
+        }
+        else {
+            _Atom.extend('op', _Op, function(value) _Op.call(new _Atom(this), value))
+        }
 
 
 // =============================================================================
