@@ -693,7 +693,7 @@ console.debug("_Atom.dirty: add", this._atomId, rangesToString([range]), atomId)
 
 
 // =============================================================================
-//      SetCell modifies _Atom, sets each cell to given value and stores value in every cell
+//      SetCell modifies/extends _Atom, sets each cell to given value and stores value in every cell
 // =============================================================================
 
     var _SetCell= function ( value ) {
@@ -715,7 +715,7 @@ console.debug("_Atom.dirty: add", this._atomId, rangesToString([range]), atomId)
 
 
 // =============================================================================
-//      Set modifiess _Atom, sets each cell to given value
+//      Set modifies/extends _Atom, sets each cell to given value
 // =============================================================================
 
     var _Set= function ( value ) {
@@ -735,7 +735,7 @@ console.debug("_Atom.dirty: add", this._atomId, rangesToString([range]), atomId)
 
 
 // =============================================================================
-//      Add extends _Atom, adds given value to each cell
+//      Add modifies/extends _Atom, adds given value to each cell
 // =============================================================================
 
     var _Add= function ( value ) {
@@ -760,7 +760,7 @@ console.debug("_Atom.dirty: add", this._atomId, rangesToString([range]), atomId)
 
 
 // =============================================================================
-//      Mult extends _Atom, multiplies every cell with given value
+//      Mult modifies/extends _Atom, multiplies every cell with given value
 // =============================================================================
 
     var _Mult= function ( value ) {
