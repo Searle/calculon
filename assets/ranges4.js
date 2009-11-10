@@ -366,13 +366,8 @@ console.debug("_Atom.dirty: add", this._atomId, rangesToString([range]), atomId)
     }
 
     _Atom.prototype._recursiveSave= function( fn ) {
-        if ( this.__recursionSemaphore ) {
-            console.Error("Recursion detected")
+        if ( this.__recursionSemaphore ) return new Error('Recursion in cell resolution')
 
-            // FIXME: return // undefined ?
-            // or throw "xx" ?
-            return null
-        }
         this.__recursionSemaphore= true
 
         var result= fn()
@@ -751,8 +746,8 @@ console.debug("_Atom.dirty: add", this._atomId, rangesToString([range]), atomId)
         var superGetCellValue= this._getCellValue
         this._getCellValue= function( cellRange, cell, origAtom ) {
             var cellValue= superGetCellValue.call(this, cellRange, cell, origAtom)
-            if ( cellValue === undefined ) return value
-            if ( cellValue === null )      return null
+            if ( cellValue instanceof Error ) return cellValue
+            if ( cellValue === undefined )    return value
             return cellValue + value
         }
         return this
@@ -776,8 +771,8 @@ console.debug("_Atom.dirty: add", this._atomId, rangesToString([range]), atomId)
         var superGetCellValue= this._getCellValue
         this._getCellValue= function( cellRange, cell, origAtom ) {
             var cellValue= superGetCellValue.call(this, cellRange, cell, origAtom)
-            if ( cellValue === undefined ) return undefined
-            if ( cellValue === null )      return null
+            if ( cellValue instanceof Error ) return cellValue
+            if ( cellValue === undefined )    return undefined
             return cellValue * value
         }
         return this
@@ -799,7 +794,7 @@ console.debug("_Atom.dirty: add", this._atomId, rangesToString([range]), atomId)
         var superGetCellValue= this._getCellValue
         this._getCellValue= function( cellRange, cell, origAtom ) {
             var cellValue= superGetCellValue.call(this, cellRange, cell, origAtom)
-            if ( cellValue === null ) return null
+            if ( cellValue instanceof Error ) return cellValue
             if ( cell === undefined ) cell= _getCell(range)
             return fn.call(cell._cellRange, cellValue)
         }
@@ -827,8 +822,8 @@ console.debug("_Atom.dirty: add", this._atomId, rangesToString([range]), atomId)
             var value= 0
             for each ( var range in ranges ) {
                 var cellValue= this._getCellValue(range)
+                if ( cellValue instanceof Error ) continue
                 if ( cellValue === undefined ) continue
-                if ( cellValue === null )      continue
                 value+= cellValue
             }
             return [ value ]
@@ -851,8 +846,8 @@ console.debug("_Atom.dirty: add", this._atomId, rangesToString([range]), atomId)
             var value= 1
             for each ( var range in ranges ) {
                 var cellValue= this._getCellValue(range)
+                if ( cellValue instanceof Error ) continue
                 if ( cellValue === undefined ) continue
-                if ( cellValue === null )      continue
                 value*= cellValue
             }
             return [ value ]

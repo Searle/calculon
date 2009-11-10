@@ -25,7 +25,10 @@
     var _compareArray= function(a, b) {
         if (a.length !== b.length) return false
         for (var i in a) {
-            if (a[i] !== b[i]) return false
+            if ( a[i] instanceof Error && b[i] instanceof Error ) {
+                if (a.message !== b.message && b.message !== '') return false
+            }
+            else if (a[i] !== b[i]) return false
         }
         return true
     }
@@ -86,7 +89,12 @@
                 compare= _compareSortedArray
             }
             else {
-                compare= function(result) result === expected
+                compare= function(result) {
+                    if ( result instanceof Error && expected instanceof Error ) {
+                        return result.message === expected.message || expected.message === ''
+                    }
+                    return result === expected
+                }
             }
         }
 
@@ -112,21 +120,7 @@
         }
     }
 
-/*
-    var _test_init= function(fn) {
-        var i= 0
-        var expected= []
-        if (fn === undefined) fn= function() i++
-        for (var row= 1; row < 10; row++) {
-            for each (var col in ['B', 'C', 'D', 'E']) {
-                var value= fn(col, row)
-                C(col + row).setCell(value)
-                expected.push(value)
-            }
-        }
-        return expected
-    }
-*/
+    var recError= new Error('Recursion in cell resolution')
 
     var test_SetGet= new TestGroup('set/get', [
         new TestGroup('various set/get with constants', [
@@ -144,15 +138,15 @@
             new Test('C(A2) (modified by previous test)', function() C('A2').getValue(), 2),
             new Test('C(A1).setCell(5); C(A2)', function() {C('A1').setCell(5); return C('A2').getValue()}, 5),
             new Test('C(A2).set(C(A2)) (no recursion)', function() C('A2').set(C('A2')).getValue(), 5),
-            new Test('var a= C(A2); a.set(a) (recursion)', function() {var a= C('A2'); return a.set(a).getValue()}, null), // "5" for separate set-atom
+            new Test('var a= C(A2); a.set(a) (recursion)', function() {var a= C('A2'); return a.set(a).getValue()}, recError), // "5" for separate set-atom
             new Test('C(A1).set(C(A2)) (no recursion)', function() C('A1').set(C('A2')).getValue(), 5),
-            new Test('C(A2).setCell(C(A2)) (recursion)', function() C('A2').setCell(C('A2')).getValue(), null),
-            new Test('var a= C(A2); a.setCell(a) (recursion)', function() {var a= C('A2'); return a.setCell(a).getValue()}, null), // "5" for separate set-atom
-            new Test('var a= C(A2); a.setCell(a.set(7)) (recursion)', function() {var a= C('A2'); return a.setCell(a.set(7)).getValue()}, null), // "7" for separate set-atom
+            new Test('C(A2).setCell(C(A2)) (recursion)', function() C('A2').setCell(C('A2')).getValue(), recError),
+            new Test('var a= C(A2); a.setCell(a) (recursion)', function() {var a= C('A2'); return a.setCell(a).getValue()}, recError), // "5" for separate set-atom
+            new Test('var a= C(A2); a.setCell(a.set(7)) (recursion)', function() {var a= C('A2'); return a.setCell(a.set(7)).getValue()}, recError), // "7" for separate set-atom
             new Test('var a= C(A2).set(5); var b= a.add(7); [a,b]', function() {var a= C('A2').set(5); var b=a.add(7); return [a.getValue(), b.getValue()]}, [12, 12], _compareArray), // [5,12] for separate set-atom
             // restore cell values
             function() { C('A1').setCell(5); C('A2').setCell(C('A1'))},
-            new Test('C(A1).setCell(C(A2)) (recursion)', function() C('A1').setCell(C('A2')).getValue(), null),
+            new Test('C(A1).setCell(C(A2)) (recursion)', function() C('A1').setCell(C('A2')).getValue(), recError),
             function() C('A1').setCell(10),
             new Test('C(A1).set(C(A1).set(1)) (no recursion)', function() C('A1').set(C('A1').set(1)).getValue(), 1),
             new Test('C(A1) (not modified by previous test)', function() C('A1').getValue(), 10),
@@ -187,17 +181,17 @@
             new Test(
                 'C(A1:A5).set(function() this) (recursion)',
                 function() C('A1', 'A5').set(function() this).getValues(),
-                [null,null,null,null,null]
+                [recError,recError,recError,recError,recError]
             ),
             new Test(
                 'C(A1:A5).set(function() this.ofs(0,0)) (recursion)',
                 function() C('A1', 'A5').set(function() this.ofs(0,0)).getValues(),
-                [null,null,null,null,null]
+                [recError,recError,recError,recError,recError]
             ),
             new Test(
                 'C(A1:A5).set(function() this.ofs(1,1).ofs(-1,-1)) (recursion)',
                 function() C('A1', 'A5').set(function() this.ofs(1,1).ofs(-1,-1)).getValues(),
-                [null,null,null,null,null]
+                [recError,recError,recError,recError,recError]
             ),
             new Test('C(A1:A5) (not modified by previous tests)', function() C('A1', 'A5').getValues(), [1,2,3,4,5]),
         ]),
@@ -211,7 +205,7 @@
             new Test(
                 'C(A1).setCell(C(A1)).add(1) (recursion)',
                 function() C('A1').setCell(C('A1')).add(1).getValue(),
-                null
+                recError
             ),
             new Test(
                 'C(A1).setCell(C(A1)).add(1).set(3).add(5) (no recursion)',
