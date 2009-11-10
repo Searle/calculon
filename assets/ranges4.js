@@ -720,7 +720,6 @@ console.debug("_Atom.dirty: add", this._atomId, rangesToString([range]), atomId)
 //            _Atom.call(this, parent)
 
             // mask lower cellmodifications
-            var superGetCellValue= this._getCellValue
             this._getCellValue= function( cellRange, cell ) {
                 return this._resolveCellValue(cellRange, value)
             }

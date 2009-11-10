@@ -107,8 +107,12 @@
         C('A1').setCell(5)
         _test('C(A1).setCell(5); C(A2)', function() C('A2').getValue(), 5)
         _test('C(A2).set(C(A2)) (no recursion)', function() C('A2').set(C('A2')).getValue(), 5)
+        _test('var a= C(A2); a.set(a) (recursion)', function() {var a= C('A2'); return a.set(a).getValue()}, null) // "5" for separate set-atom
         _test('C(A1).set(C(A2)) (no recursion)', function() C('A1').set(C('A2')).getValue(), 5)
         _test('C(A2).setCell(C(A2)) (recursion)', function() C('A2').setCell(C('A2')).getValue(), null)
+        _test('var a= C(A2); a.setCell(a) (recursion)', function() {var a= C('A2'); return a.setCell(a).getValue()}, null) // "5" for separate set-atom
+        _test('var a= C(A2); a.setCell(a.set(7)) (recursion)', function() {var a= C('A2'); return a.setCell(a.set(7)).getValue()}, null) // "7" for separate set-atom
+        _test('var a= C(A2).set(5); var b= a.add(7); [a,b]', function() {var a= C('A2').set(5); var b=a.add(7); return [a.getValue(), b.getValue()]}, [12, 12], _compareArray) // [5,12] for separate set-atom
         _test('C(A1).setCell(C(A2)) (recursion)', function() C('A1').setCell(C('A2')).getValue(), null)
         C('A1').setCell(10)
         _test('C(A1).set(C(A1).set(1)) (no recursion)', function() C('A1').set(C('A1').set(1)).getValue(), 1)
@@ -238,7 +242,9 @@
         // reinit changed cells
         for each (let r in _range(1, 10)) for each (let c in ['B','C','D','E']) C(c + r).setCell(c + r)
 
+        // grep a single cell out of a range
         _test('C(B1:E9).grep(C5)', function() C('B1', 'E9').grep('C5').getValues(), ['C5'])
+        // ...add a cell offset
         _test('C(B1:E9).grep(C5).ofs(1,1)', function() C('B1', 'E9').grep('C5').ofs(1,1).getValues(), ['D6'])
         _test('C(B1:D3).ofs(1,1)', function() C('B1', 'D3').ofs(1,1).getValues(), ['C2', 'D2', 'E2', 'C3', 'D3', 'E3', 'C4', 'D4', 'E4'])
         _test('C(B1:E9).ofs(20,20)', function() C('B1', 'E9').ofs(20,20).getValues(), [undefined for (i in _range(0,36))])
@@ -344,6 +350,6 @@
         + '<tr><td>Success:</td><td>' + _statistic.success + ' (' + (Math.floor(_statistic.success / _statistic.tests * 1000)/10) + '%)</td></tr>'
         + '<tr><td>Failed:</td><td>' + _statistic.failed + ' (' + (Math.floor(_statistic.failed / _statistic.tests * 1000)/10) + '%)</td></tr>'
         + '</table>'
-        + '<a href="' + document.location.pathname + (_showTimer ? '' : '?profiler') + '">Profiler ' + (_showTimer ? 'aus' : 'an') + '</a>'
+        + '<a href="' + document.location.pathname + (_showTimer ? '' : '?profiler') + '">Profiler ' + (_showTimer ? 'off' : 'on') + '</a>'
     )
 })()
