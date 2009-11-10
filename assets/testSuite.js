@@ -344,6 +344,6 @@
         + '<tr><td>Success:</td><td>' + _statistic.success + ' (' + (Math.floor(_statistic.success / _statistic.tests * 1000)/10) + '%)</td></tr>'
         + '<tr><td>Failed:</td><td>' + _statistic.failed + ' (' + (Math.floor(_statistic.failed / _statistic.tests * 1000)/10) + '%)</td></tr>'
         + '</table>'
+        + '<a href="' + document.location.pathname + (_showTimer ? '' : '?profiler') + '">Profiler ' + (_showTimer ? 'aus' : 'an') + '</a>'
     )
-
 })()
