@@ -289,6 +289,7 @@ console.debug('_Atom.new:', this._atomId, this.name, parent ? '(parent:' + paren
                 me.__flattened= _flatten(me.getRanges())
                 return true
             }
+
             return false
         }
 
@@ -381,19 +382,20 @@ console.debug("_Atom.dirty: add", this._atomId, rangesToString([range]), atomId)
     }
 
     // returns cell's value, should be overwritten by modifying atom heirs
-    _Atom.prototype.getCellValue= function( cellRange, cell ) {
+    _Atom.prototype.getCellValue= function( cellRange, cell, origAtom ) {
+        if ( origAtom === undefined ) origAtom= this
         if ( this._ownCell(cellRange) ) {
-            return this._getCellValue(cellRange, cell)
+            return this._getCellValue(cellRange, cell, origAtom)
         }
-        return this._parentsCellValue(cellRange, cell)
+        return this._parentsCellValue(cellRange, cell, origAtom)
     }
 
     // returns parent's cell value or original cell's value
-    _Atom.prototype._parentsCellValue= function( cellRange, cell ) {
+    _Atom.prototype._parentsCellValue= function( cellRange, cell, origAtom ) {
         if ( this._parent === undefined ) {
-            return _getCellValue(this, cellRange)
+            return _getCellValue(origAtom, cellRange)
         }
-        return this._parent.getCellValue(cellRange, cell)
+        return this._parent.getCellValue(cellRange, cell, origAtom)
     }
 
     // virtual method returning parent's cell value
@@ -747,9 +749,8 @@ console.debug("_Atom.dirty: add", this._atomId, rangesToString([range]), atomId)
         if ( value instanceof _Atom ) value= value.getValue()
 
         var superGetCellValue= this._getCellValue
-
-        this._getCellValue= function( cellRange, cell ) {
-            var cellValue= superGetCellValue.call(this, cellRange, cell)
+        this._getCellValue= function( cellRange, cell, origAtom ) {
+            var cellValue= superGetCellValue.call(this, cellRange, cell, origAtom)
             if ( cellValue === undefined ) return value
             if ( cellValue === null )      return null
             return cellValue + value
@@ -773,9 +774,8 @@ console.debug("_Atom.dirty: add", this._atomId, rangesToString([range]), atomId)
         if ( value instanceof _Atom ) value= value.getValue()
 
         var superGetCellValue= this._getCellValue
-
-        this._getCellValue= function( cellRange, cell ) {
-            var cellValue= superGetCellValue.call(this, cellRange, cell)
+        this._getCellValue= function( cellRange, cell, origAtom ) {
+            var cellValue= superGetCellValue.call(this, cellRange, cell, origAtom)
             if ( cellValue === undefined ) return undefined
             if ( cellValue === null )      return null
             return cellValue * value
@@ -797,8 +797,8 @@ console.debug("_Atom.dirty: add", this._atomId, rangesToString([range]), atomId)
 
     var _Op= function ( fn ) {
         var superGetCellValue= this._getCellValue
-        this._getCellValue= function( cellRange, cell ) {
-            var cellValue= superGetCellValue.call(this, cellRange, cell)
+        this._getCellValue= function( cellRange, cell, origAtom ) {
+            var cellValue= superGetCellValue.call(this, cellRange, cell, origAtom)
             if ( cellValue === null ) return null
             if ( cell === undefined ) cell= _getCell(range)
             return fn.call(cell._cellRange, cellValue)
