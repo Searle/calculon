@@ -56,7 +56,7 @@ console.logLevel('log')
     
     C('C6').setCell('Steppi');
 
-console.log('C6:', C('C6').getValue())
+    console.log('C6:', C('C6').getValue())
     console.warn("SV Ergebnis:", sv.getValues() )
     
     console.log('all values C5:E8: ', C('C5', 'E8').getValues())

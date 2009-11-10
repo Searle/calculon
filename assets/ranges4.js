@@ -371,7 +371,7 @@ console.debug("_Atom.dirty: add", this._atomId, rangesToString([range]), atomId)
 
             // FIXME: return // undefined ?
             // or throw "xx" ?
-            return null
+            return null         // #WERT#
         }
         this.__recursionSemaphore= true
 
@@ -410,8 +410,8 @@ console.debug("_Atom.dirty: add", this._atomId, rangesToString([range]), atomId)
         var y= cellRange[1]
         for each ( var range in this.getRanges() ) {
             if (
-                range[0] <= x && range[2] >= x &&
-                range[1] <= y && range[3] >= y
+                range[0] <= x && range[2] >= x
+                && range[1] <= y && range[3] >= y
             ) return true
         }
         return false
