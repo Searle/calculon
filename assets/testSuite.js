@@ -379,6 +379,11 @@
                 function() SVERWEIS(C('B1', 'E9'), function(v) v === 'B1' || v === 'B6', 2).getValues(),
                 ['D1', 'D3', 'D6']
             ),
+            new Test(
+                'SVERWEIS("B1:E9", "B1 || B6", 2) (value is function, cell access via "this")',
+                function() SVERWEIS(C('B1', 'E9'), function() this.getValue() === 'B1' || this.getValue() === 'B6', 2).getValues(),
+                ['D1', 'D3', 'D6']
+            ),
         ])
     })()
 

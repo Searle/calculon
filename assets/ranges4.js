@@ -5,6 +5,11 @@
     // if set to false, those methods will create a new atom with current as parent
     var __modifyAtoms= true
 
+    // various debug output flags
+    var __debugFlatten= false
+    var __debugAtomConstructor= false
+    var __debugDirty= false
+
 // TODO: Auf 3D (sheets) ausbauen
 
 // =============================================================================
@@ -42,7 +47,7 @@
         var cellToString= function( x, y ) "@ABCDEFGHIJKLMNOPQRSTUVWXYZ".substr(x, 1) + y
 
         var result= []
-        for each ( var range in ranges ) {
+        for each ( let range in ranges ) {
             var cstr1= cellToString(range[0], range[1])
             var cstr2= cellToString(range[2], range[3])
             result.push(cstr1 == cstr2 ? cstr1 : cstr1 + ':' + cstr2)
@@ -60,12 +65,12 @@
 
         if ( ranges.length === 0 ) return ranges
 
-console.debug("_flatten:", rangesToString(ranges))
+if ( __debugFlatten ) console.debug("_flatten:", rangesToString(ranges))
 
         // Catch common case: Range with one cell
         if ( ranges.length === 1 && ranges[0][0] === ranges[0][2] && ranges[0][1] === ranges[0][3] ) return ranges
 
-console.debug("_flatten using slow")
+if ( __debugFlatten ) console.debug("_flatten using slow")
 
         // Irgendwie die Ranges merken:
         // - Key bauen fuer alle Ranges
@@ -75,9 +80,9 @@ console.debug("_flatten using slow")
         // Gibt jetzt nen Hash zurueck:
 
         var newRanges= {}
-        for each ( var range in ranges ) {
-            for ( var y= range[1]; y <= range[3]; y++ ) {
-                for ( var x= range[0]; x <= range[2]; x++ ) {
+        for each ( let range in ranges ) {
+            for ( let y= range[1]; y <= range[3]; y++ ) {
+                for ( let x= range[0]; x <= range[2]; x++ ) {
                     if ( x < 0 || y < 0 ) continue
                     if ( x + ':' + y in newRanges ) continue
                     newRanges[x + ':' + y]= [x, y, x, y]
@@ -89,9 +94,9 @@ console.debug("_flatten using slow")
 /*
         var lookup= {}
         var newRanges= []
-        for each ( var range in ranges ) {
-            for ( var y= range[1]; y <= range[3]; y++ ) {
-                for ( var x= range[0]; x <= range[2]; x++ ) {
+        for each ( let range in ranges ) {
+            for ( let y= range[1]; y <= range[3]; y++ ) {
+                for ( let x= range[0]; x <= range[2]; x++ ) {
                     if ( x < 0 || y < 0 ) continue
                     if ( lookup[x + ':' + y] ) continue
                     newRanges.push([x, y, x, y])
@@ -105,7 +110,7 @@ console.debug("_flatten using slow")
 
 /*
         var yrs= {}
-        for each ( var range in ranges ) {
+        for each ( let range in ranges ) {
             if ( yrs[range[0]] === undefined ) yrs[range[0]]= [ range[0], [], [] ]
             yrs[range[0]][1].push(range[2])
             if ( yrs[range[1]] === undefined ) yrs[range[1]]= [ range[1], [], [] ]
@@ -113,10 +118,10 @@ console.debug("_flatten using slow")
         }
 
         var yrss= []
-        for each ( var yr in yrs ) yrss.push(yr)
+        for each ( let yr in yrs ) yrss.push(yr)
         yrss.sort(function (a, b) { return a[0] - b[0] })
 
-        for each ( var yr in yrss ) {
+        for each ( let yr in yrss ) {
             var y= yr[0]
             var leftx= yr[1]
             var rightx= yr[2]
@@ -174,9 +179,9 @@ console.debug("_flatten using slow")
     }
 
     Cell.prototype.dirty= function() {
-        for ( var atomId in this._atomRefs ) {
+        for ( let atomId in this._atomRefs ) {
 
-console.debug("Cell.dirty: atomid=" + atomId)
+if ( __debugDirty ) console.debug("Cell.dirty: atomid=" + atomId)
 
             atoms[atomId].dirty()
         }
@@ -211,6 +216,7 @@ console.debug("Cell.dirty: atomid=" + atomId)
     var _getCellValue= function( atom, coord ) {
         var cell= __getCell(coord)
         if ( cell === undefined ) return // undefined
+console.debug('Fetching real value of Cell ' + coord.join(':'))
         return cell.getValue(atom)
     }
 
@@ -230,13 +236,13 @@ console.debug("Cell.dirty: atomid=" + atomId)
         this._rootId= parent ? parent._rootId : _atomId
         this._parent= parent
 
+        // cache for cellAtoms used as "this" if cell's value is a function
         this._cellAtoms= {}
-        this._isCellAtom= false
 
         // Garbage collection horror
         atoms[_atomId]= this
 
-console.debug('_Atom.new:', this._atomId, this.name, parent ? '(parent:' + parent._atomId + ' ' + parent.name + ')' : '')
+if ( __debugAtomConstructor ) console.debug('_Atom.new:', this._atomId, this.name, parent ? '(parent:' + parent._atomId + ' ' + parent.name + ')' : '')
     }
 
     // -----------------------------------------------------------------------------
@@ -246,7 +252,8 @@ console.debug('_Atom.new:', this._atomId, this.name, parent ? '(parent:' + paren
     _Atom.dirties= {}
 
     _Atom.extend= function( name, protoFn, factoryFn ) {
-        _Atom.prototype[name]= factoryFn
+        // if factoryFn is undefined, do not create a method
+        if ( factoryFn !== undefined ) _Atom.prototype[name]= factoryFn
         protoFn.prototype.name= name
         protoFn.prototype.__proto__= _Atom.prototype
     }
@@ -303,16 +310,16 @@ console.debug('_Atom.new:', this._atomId, this.name, parent ? '(parent:' + paren
         if ( this._atomId in _Atom.dirties ) return
 
         _Atom.dirties[this._atomId]= true
-        for each ( var range in this.getFlattenedRanges() ) {
+        for each ( let range in this.getFlattenedRanges() ) {
 
-console.debug("_Atom.dirty: add", this._atomId, rangesToString([range]))
+if ( __debugDirty ) console.debug("_Atom.dirty: add", this._atomId, rangesToString([range]))
 
             var cell= __getCell(range)
             if ( cell === undefined ) continue
 
-            for ( var atomId in cell.getAtomRefs() ) {
+            for ( let atomId in cell.getAtomRefs() ) {
 
-console.debug("_Atom.dirty: add", this._atomId, rangesToString([range]), atomId)
+if ( __debugDirty ) console.debug("_Atom.dirty: add", this._atomId, rangesToString([range]), atomId)
 
                 _Atom.dirties[atomId]= true
             }
@@ -326,25 +333,22 @@ console.debug("_Atom.dirty: add", this._atomId, rangesToString([range]), atomId)
         if ( ranges.length === 0 ) return []
 
         var values= []
-        for each ( var range in ranges ) {
+        for each ( let range in ranges ) {
             values.push(this.getCellValue(range))
         }
         return values
     }
 
-    _Atom.prototype.getValue= function() {
-
-        // TODO: is that ok?
-        return this.getValues()[0]
-    }
+    // TODO: is this ok?
+    _Atom.prototype.getValue= function() this.getValues()[0]
 
     _Atom.prototype._getCellAtom= function( coord ) {
-        if ( this._isCellAtom ) return this
+        if ( !this._ownCell(coord) ) {
+            throw "Cannot get cellAtom of foreign cell " + coord[0] + ':' + coord[1]
+        }
         var key= coord[0] + ':' + coord[1]
-        if ( this._cellAtoms[key] ) return this._cellAtoms[key]
-        var atom= this._cellAtoms[key]= this.range(coord)
-        atom._isCellAtom= true
-        return atom
+        if ( this._cellAtoms[key] !== undefined ) return this._cellAtoms[key]
+        return this._cellAtoms[key]= new _CellAtom(this, coord)
     }
 
     // resolves value starting in current atom (needs coord to build this for functions)
@@ -353,19 +357,19 @@ console.debug("_Atom.dirty: add", this._atomId, rangesToString([range]), atomId)
 
         if ( _isFunction(value) ) {
             var cellAtom= this._getCellAtom(coord)
-            return cellAtom._recursiveSave(function() {
+            return cellAtom._recursionSave(function() {
                 var v= value.apply(cellAtom)
                 if ( v instanceof _Atom ) return v.getValue()
                 return v
             })
         }
         if ( value instanceof _Atom ) {
-            return this._recursiveSave(function() value.getValue())
+            return this._recursionSave(function() value.getValue())
         }
         return value
     }
 
-    _Atom.prototype._recursiveSave= function( fn ) {
+    _Atom.prototype._recursionSave= function( fn ) {
         if ( this.__recursionSemaphore ) return new Error('Recursion in cell resolution')
 
         this.__recursionSemaphore= true
@@ -377,20 +381,20 @@ console.debug("_Atom.dirty: add", this._atomId, rangesToString([range]), atomId)
     }
 
     // returns cell's value, should be overwritten by modifying atom heirs
-    _Atom.prototype.getCellValue= function( cellRange, cell, origAtom ) {
+    _Atom.prototype.getCellValue= function( cellRange, origAtom ) {
         if ( origAtom === undefined ) origAtom= this
         if ( this._ownCell(cellRange) ) {
-            return this._getCellValue(cellRange, cell, origAtom)
+            return this._getCellValue(cellRange, origAtom)
         }
-        return this._parentsCellValue(cellRange, cell, origAtom)
+        return this._parentsCellValue(cellRange, origAtom)
     }
 
     // returns parent's cell value or original cell's value
-    _Atom.prototype._parentsCellValue= function( cellRange, cell, origAtom ) {
+    _Atom.prototype._parentsCellValue= function( cellRange, origAtom ) {
         if ( this._parent === undefined ) {
             return _getCellValue(origAtom, cellRange)
         }
-        return this._parent.getCellValue(cellRange, cell, origAtom)
+        return this._parent.getCellValue(cellRange, origAtom)
     }
 
     // virtual method returning parent's cell value
@@ -399,11 +403,9 @@ console.debug("_Atom.dirty: add", this._atomId, rangesToString([range]), atomId)
 
     // returns true if cell is in atom's region collection
     _Atom.prototype._ownCell= function( cellRange ) {
-        // cellAtoms do not provide values
-        if ( this._isCellAtom ) return false
         var x= cellRange[0]
         var y= cellRange[1]
-        for each ( var range in this.getRanges() ) {
+        for each ( let range in this.getRanges() ) {
             if (
                 range[0] <= x && range[2] >= x
                 && range[1] <= y && range[3] >= y
@@ -428,6 +430,25 @@ console.debug("_Atom.dirty: add", this._atomId, rangesToString([range]), atomId)
 //
 // *****************************************************************************
 // =============================================================================
+
+// =============================================================================
+//      _CellAtom extends _Atom, represents a single cell's atom used as "this" if cell's value is a function
+//      (does not own a value, is only for correct resolving)
+// =============================================================================
+
+    var _CellAtom= function( parent, range ) {
+        _Atom.call(this, parent)
+        range[2]= range[0]
+        range[3]= range[1]
+
+        this.getRanges= function() [range]
+
+        // cellAtoms do not provide values
+        this._ownCell= function() false
+    }
+
+    // do not provide a method for _Atom for this private class
+    _Atom.extend('_cellAtom', _CellAtom)
 
 // =============================================================================
 //      AddRange extends _Atom, adds given ranges to parent's ranges
@@ -471,7 +492,7 @@ console.debug("_Atom.dirty: add", this._atomId, rangesToString([range]), atomId)
         // - new Atom().chainedFn() ...
         // NEEDS TESTING!
         else if ( arg instanceof _Atom ) {
-            for each ( var range in arg.getRanges() ) __addRange(ranges, range)
+            for each ( let range in arg.getRanges() ) __addRange(ranges, range)
             return ranges
         }
 
@@ -500,7 +521,7 @@ console.debug("_Atom.dirty: add", this._atomId, rangesToString([range]), atomId)
 
         this.getRanges= function() {
             var _ranges= parent.getRanges()
-            for each ( var arg in newRanges ) __addRange(_ranges, arg)
+            for each ( let arg in newRanges ) __addRange(_ranges, arg)
             return _ranges
         }
     }
@@ -532,7 +553,7 @@ console.debug("_Atom.dirty: add", this._atomId, rangesToString([range]), atomId)
 
         this.getRanges= function() {
             var _ranges= []
-            for each ( var args in ranges ) __addRange(_ranges, arg)
+            for each ( let args in ranges ) __addRange(_ranges, arg)
             return _ranges
         }
     }
@@ -629,7 +650,7 @@ console.debug("_Atom.dirty: add", this._atomId, rangesToString([range]), atomId)
             var relRanges= rel.getRanges()
 
             var ranges= []
-            for ( var i = 0; i < relRanges.length; i++ ) {
+            for ( let i = 0; i < relRanges.length; i++ ) {
                 var j= i % sourceRanges.length
                 ranges.push([
                     sourceRanges[j][0] + relRanges[i][0],
@@ -666,24 +687,31 @@ console.debug("_Atom.dirty: add", this._atomId, rangesToString([range]), atomId)
 //      Grep extends _Atom
 // =============================================================================
 
-    // TODO: call checkFn with cell's range as this?
-    var _Grep= function ( parent, checkFn ) {
+    var _Grep= function ( parent, value ) {
         _Atom.call(this, parent)
-
-        if ( checkFn instanceof _Atom ) {
-            checkFn= checkFn.getValue()
-        }
-        if ( !_isFunction(checkFn) ) {
-            var value= checkFn
-            checkFn= function(v) value === v
-        }
 
         this.getRanges= function() {
             var newRanges= []
-            for each ( var range in parent.getFlattenedRanges() ) {
-                var cell= __getCell(range)
-                var cellValue= parent.getCellValue(range)
-                if ( checkFn.call(cell, cellValue) ) {
+
+            if ( value instanceof _Atom ) value= value.getValue()
+            if ( value instanceof Error ) {
+                throw 'Error while computing grep value: ' + value.message
+            }
+
+            for each ( let range in parent.getFlattenedRanges() ) {
+                var cellValue= parent.getCellValue(range, this)
+
+                // FIXME: do something on error
+                if ( cellValue instanceof Error ) continue
+
+                if ( _isFunction(value) ) {
+                    // call function with cellAtom as "this" and cellValue as parameter, make it recursion save
+                    var result= parent._recursionSave(function() value.call(parent._getCellAtom(range), cellValue))
+                    if ( result instanceof Error ) throw "Error in grep function: " + result.message
+                    if ( result ) newRanges.push(range)
+                    continue
+                }
+                if ( value === cellValue ) {
                     newRanges.push(range)
                 }
             }
@@ -700,7 +728,7 @@ console.debug("_Atom.dirty: add", this._atomId, rangesToString([range]), atomId)
 
     var _SetCell= function ( value ) {
 
-        for each ( var range in this.getFlattenedRanges() ) {
+        for each ( let range in this.getFlattenedRanges() ) {
             _getCell(this, range).setValue(value)
         }
 
@@ -744,8 +772,8 @@ console.debug("_Atom.dirty: add", this._atomId, rangesToString([range]), atomId)
         if ( value instanceof _Atom ) value= value.getValue()
 
         var superGetCellValue= this._getCellValue
-        this._getCellValue= function( cellRange, cell, origAtom ) {
-            var cellValue= superGetCellValue.call(this, cellRange, cell, origAtom)
+        this._getCellValue= function( cellRange, origAtom ) {
+            var cellValue= superGetCellValue.call(this, cellRange, origAtom )
             if ( cellValue instanceof Error ) return cellValue
             if ( cellValue === undefined )    return value
             return cellValue + value
@@ -769,8 +797,8 @@ console.debug("_Atom.dirty: add", this._atomId, rangesToString([range]), atomId)
         if ( value instanceof _Atom ) value= value.getValue()
 
         var superGetCellValue= this._getCellValue
-        this._getCellValue= function( cellRange, cell, origAtom ) {
-            var cellValue= superGetCellValue.call(this, cellRange, cell, origAtom)
+        this._getCellValue= function( cellRange, origAtom ) {
+            var cellValue= superGetCellValue.call(this, cellRange, origAtom)
             if ( cellValue instanceof Error ) return cellValue
             if ( cellValue === undefined )    return undefined
             return cellValue * value
@@ -787,29 +815,6 @@ console.debug("_Atom.dirty: add", this._atomId, rangesToString([range]), atomId)
 
 
 // =============================================================================
-//      Op extends _Atom, applies given function on every cell
-// =============================================================================
-
-    var _Op= function ( fn ) {
-        var superGetCellValue= this._getCellValue
-        this._getCellValue= function( cellRange, cell, origAtom ) {
-            var cellValue= superGetCellValue.call(this, cellRange, cell, origAtom)
-            if ( cellValue instanceof Error ) return cellValue
-            if ( cell === undefined ) cell= _getCell(range)
-            return fn.call(cell._cellRange, cellValue)
-        }
-        return this
-    }
-
-    if (__modifyAtoms) {
-        _Atom.prototype.op= _Op
-    }
-    else {
-        _Atom.extend('op', _Op, function(value) _Op.call(new _Atom(this), value))
-    }
-
-
-// =============================================================================
 //      Sum extends _Atom, returns sum of all cells
 // =============================================================================
 
@@ -820,7 +825,7 @@ console.debug("_Atom.dirty: add", this._atomId, rangesToString([range]), atomId)
             var ranges= parent.getFlattenedRanges()
             if ( ranges.length === 0 ) return [ undefined ]
             var value= 0
-            for each ( var range in ranges ) {
+            for each ( let range in ranges ) {
                 var cellValue= this._getCellValue(range)
                 if ( cellValue instanceof Error ) continue
                 if ( cellValue === undefined ) continue
@@ -844,7 +849,7 @@ console.debug("_Atom.dirty: add", this._atomId, rangesToString([range]), atomId)
             var ranges= parent.getFlattenedRanges()
             if ( ranges.length === 0 ) return [ undefined ]
             var value= 1
-            for each ( var range in ranges ) {
+            for each ( let range in ranges ) {
                 var cellValue= this._getCellValue(range)
                 if ( cellValue instanceof Error ) continue
                 if ( cellValue === undefined ) continue
@@ -871,7 +876,10 @@ console.debug("_Atom.dirty: add", this._atomId, rangesToString([range]), atomId)
         console.log(cells)
     }
 
-    V= function ( value ) (new _Atom).addRange( 1, 1 ).setValue(value)
+    // FIXME: prevent V from being modified (addRange, set etc. - most important: setCell!)
+    // may be it should get it's own class derived from atom,
+    // providing getValues() and throwing exceptions on getRanges()
+    V= function ( value ) (new _Atom).addRange( 1, 1 ).set(value)
 
     A= function ( i ) atoms[i]
     DA= function ( i ) atoms[i].dump("ATOM")
