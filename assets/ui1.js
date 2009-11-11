@@ -107,6 +107,13 @@ jQuery(function($) {
 
         this.setCell= function( x, y, value ) {
             extendTo(x, y)
+            if (value instanceof Error) {
+                $cell(x, y).addClass('error')
+                value= value.message
+            }
+            else {
+                $cell(x, y).removeClass('error')
+            }
             $cell(x, y).text(value)
         }
 

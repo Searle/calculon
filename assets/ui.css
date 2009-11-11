@@ -221,6 +221,11 @@ body.show-quiz     .tab.show-quiz {
     border: 1px solid black;
 }
 
+.calculon-sheet > table > tbody > tr > td.error {
+    background-color: red;
+    color: white;
+}
+
 /* ============================================================================
 //      Misc.
 // ============================================================================ */

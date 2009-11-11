@@ -13,6 +13,7 @@ jQuery(function($) {
     C('C9').setCell(C('C7').add(5));
     console.log('C9: ', C('C9').getValues());
 
+    C('B3').setCell(C('B3'))
 
     for each ( var cell in GetAllCells() ) {
         console.log(cell._x, cell._y, cell.getValue());
