@@ -225,6 +225,10 @@ console.debug('Fetching real value of Cell ' + coord.join(':'))
 //      Atom
 // =============================================================================
 
+    /**
+     *  Atom Identifier
+     *  @type {integer}
+     */
     var _atomId= 0
 
     var atoms= {}
@@ -252,6 +256,7 @@ if ( __debugAtomConstructor ) console.debug('_Atom.new:', this._atomId, this.nam
     _Atom.dirties= {}
 
     _Atom.extend= function( name, protoFn, factoryFn ) {
+
         // if factoryFn is undefined, do not create a method
         if ( factoryFn !== undefined ) _Atom.prototype[name]= factoryFn
         protoFn.prototype.name= name
@@ -409,8 +414,8 @@ if ( __debugDirty ) console.debug("_Atom.dirty: add", this._atomId, rangesToStri
         var y= cellRange[1]
         for each ( let range in this.getRanges() ) {
             if (
-                range[0] <= x && range[2] >= x &&
-                range[1] <= y && range[3] >= y
+                range[0] <= x && range[2] >= x
+                && range[1] <= y && range[3] >= y
             ) return true
         }
         return false
@@ -443,7 +448,7 @@ if ( __debugDirty ) console.debug("_Atom.dirty: add", this._atomId, rangesToStri
         range[2]= range[0]
         range[3]= range[1]
 
-        this.getRanges= function() [range]
+        this.getRanges= function() [ range ]
 
         // cellAtoms do not provide values
         this._ownCell= function() false
@@ -881,7 +886,7 @@ if ( __debugDirty ) console.debug("_Atom.dirty: add", this._atomId, rangesToStri
     // FIXME: prevent V from being modified (addRange, set etc. - most important: setCell!)
     // may be it should get it's own class derived from atom,
     // providing getValues() and throwing exceptions on getRanges()
-    V= function ( value ) (new _Atom).addRange( 1, 1 ).set(value)
+    V= function ( value ) (new _Atom).addRange(1, 1).set(value)
 
     A= function ( i ) atoms[i]
     DA= function ( i ) atoms[i].dump("ATOM")
