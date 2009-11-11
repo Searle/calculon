@@ -211,6 +211,7 @@ console.debug("Cell.dirty: atomid=" + atomId)
     var _getCellValue= function( atom, coord ) {
         var cell= __getCell(coord)
         if ( cell === undefined ) return // undefined
+// console.debug('Getting real value of Cell ' + coord.join(':'))
         return cell.getValue(atom)
     }
 
@@ -231,7 +232,6 @@ console.debug("Cell.dirty: atomid=" + atomId)
         this._parent= parent
 
         this._cellAtoms= {}
-        this._isCellAtom= false
 
         // Garbage collection horror
         atoms[_atomId]= this
@@ -246,7 +246,8 @@ console.debug('_Atom.new:', this._atomId, this.name, parent ? '(parent:' + paren
     _Atom.dirties= {}
 
     _Atom.extend= function( name, protoFn, factoryFn ) {
-        _Atom.prototype[name]= factoryFn
+        // if factoryFn is undefined, do not create a method
+        if ( factoryFn !== undefined ) _Atom.prototype[name]= factoryFn
         protoFn.prototype.name= name
         protoFn.prototype.__proto__= _Atom.prototype
     }
@@ -339,12 +340,9 @@ console.debug("_Atom.dirty: add", this._atomId, rangesToString([range]), atomId)
     }
 
     _Atom.prototype._getCellAtom= function( coord ) {
-        if ( this._isCellAtom ) return this
         var key= coord[0] + ':' + coord[1]
-        if ( this._cellAtoms[key] ) return this._cellAtoms[key]
-        var atom= this._cellAtoms[key]= this.range(coord)
-        atom._isCellAtom= true
-        return atom
+        if ( this._cellAtoms[key] !== undefined ) return this._cellAtoms[key]
+        return this._cellAtoms[key]= new _CellAtom(this, coord)
     }
 
     // resolves value starting in current atom (needs coord to build this for functions)
@@ -399,8 +397,6 @@ console.debug("_Atom.dirty: add", this._atomId, rangesToString([range]), atomId)
 
     // returns true if cell is in atom's region collection
     _Atom.prototype._ownCell= function( cellRange ) {
-        // cellAtoms do not provide values
-        if ( this._isCellAtom ) return false
         var x= cellRange[0]
         var y= cellRange[1]
         for each ( var range in this.getRanges() ) {
@@ -428,6 +424,34 @@ console.debug("_Atom.dirty: add", this._atomId, rangesToString([range]), atomId)
 //
 // *****************************************************************************
 // =============================================================================
+
+// =============================================================================
+//      _CellAtom extends _Atom, represents a single cell's atom
+//      (does not own a value, is only for correct resolving)
+// =============================================================================
+
+    var _CellAtom= function( parent, range ) {
+        _Atom.call(this, parent)
+        range[2]= range[0]
+        range[3]= range[1]
+
+        this.getRanges= function() [range]
+
+        // cellAtoms do not provide values
+        this._ownCell= function() false
+
+        this._getCellAtom= function( coord ) {
+            if ( coord[0] === range[0] && coord[1] === range[1] ) {
+                return this
+            }
+//            return this._parent._getCellAtom(coord)
+            throw "Trying to get cell's CellAtom with wrong coordinates. Have: "
+                + range[0] + ":" + range[1] + ". Requested: "
+                + coord[0] + ":" + coord[1]
+        }
+    }
+
+    _Atom.extend('_cellAtom', _CellAtom)
 
 // =============================================================================
 //      AddRange extends _Atom, adds given ranges to parent's ranges
