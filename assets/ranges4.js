@@ -739,15 +739,15 @@ if ( __debugDirty ) console.debug("_Atom.dirty: add", this._atomId, rangesToStri
             _getCell(this, range).setValue(value)
         }
 
-        return this.set(value)
+        // return this.set(value)
     }
 
-    if (__modifyAtoms) {
+//    if (__modifyAtoms) {
         _Atom.prototype.setCell= _SetCell
-    }
-    else {
-        _Atom.extend('setCell', _SetCell, function(value) _SetCell.call(new _Atom(this), value))
-    }
+//    }
+//    else {
+//        _Atom.extend('setCell', _SetCell, function(value) _SetCell.call(new _Atom(this), value))
+//    }
 
 
 // =============================================================================

@@ -128,32 +128,28 @@
             new Test('C(A1).set(1)', function() C('A1').set(1).getValue(), 1),
             new Test('C(A1) (not modified by previous test)', function() C('A1').getValue(), undefined),
             new Test('C(A1).setCell(1); C(A1)', function() {C('A1').setCell(1); return C('A1').getValue()}, 1),
-            new Test('C(A1).setCell(2)', function() C('A1').setCell(2).getValue(), 2),
+            new Test('C(A1).setCell(2)', function() { C('A1').setCell(2); return C('A1').getValue(); }, 2),
         ]),
 
         new TestGroup('various set/get with atoms, recursion tests', [
             new Test('C(A2).set(C(A1))', function() C('A2').set(C('A1')).getValue(), 2),
             new Test('C(A2) (not modified by previous test)', function() C('A2').getValue(), undefined),
-            new Test('C(A2).setCell(C(A1))', function() C('A2').setCell(C('A1')).getValue(), 2),
+            new Test('C(A2).setCell(C(A1))', function() { C('A2').setCell(C('A1')); return C('A2').getValue(); }, 2),
             new Test('C(A2) (modified by previous test)', function() C('A2').getValue(), 2),
-            new Test('C(A1).setCell(5); C(A2)', function() {C('A1').setCell(5); return C('A2').getValue()}, 5),
+            new Test('C(A1).setCell(5); C(A2)', function() { C('A1').setCell(5); return C('A2').getValue(); }, 5),
             new Test('C(A2).set(C(A2)) (no recursion)', function() C('A2').set(C('A2')).getValue(), 5),
             new Test('var a= C(A2); a.set(a) (recursion)', function() {var a= C('A2'); return a.set(a).getValue()}, recError), // "5" for separate set-atom
             new Test('C(A1).set(C(A2)) (no recursion)', function() C('A1').set(C('A2')).getValue(), 5),
-            new Test('C(A2).setCell(C(A2)) (recursion)', function() C('A2').setCell(C('A2')).getValue(), recError),
-            new Test('var a= C(A2); a.setCell(a) (recursion)', function() {var a= C('A2'); return a.setCell(a).getValue()}, recError), // "5" for separate set-atom
-            new Test('var a= C(A2); a.setCell(a.set(7)) (recursion)', function() {var a= C('A2'); return a.setCell(a.set(7)).getValue()}, recError), // "7" for separate set-atom
-            new Test('var a= C(A2).set(5); var b= a.add(7); [a,b]', function() {var a= C('A2').set(5); var b=a.add(7); return [a.getValue(), b.getValue()]}, [12, 12], _compareArray), // [5,12] for separate set-atom
+            new Test('C(A2).setCell(C(A2)) (recursion)', function() { C('A2').setCell(C('A2')); return C('A2').getValue(); }, recError),
+            new Test('var a= C(A2); a.setCell(a) (recursion)', function() { var a= C('A2'); a.setCell(a); return a.getValue(); }, recError), // "5" for separate set-atom
+            new Test('var a= C(A2); a.setCell(a.set(7)) (recursion)', function() { var a= C('A2'); a.setCell(a.set(7)); return a.getValue(); }, recError), // "7" for separate set-atom
+            new Test('var a= C(A2).set(5); var b= a.add(7); [a,b]', function() { var a= C('A2').set(5); var b=a.add(7); return [ a.getValue(), b.getValue() ]}, [ 12, 12 ], _compareArray), // [5,12] for separate set-atom
             // restore cell values
             function() { C('A1').setCell(5); C('A2').setCell(C('A1'))},
-            new Test('C(A1).setCell(C(A2)) (recursion)', function() C('A1').setCell(C('A2')).getValue(), recError),
+            new Test('C(A1).setCell(C(A2)) (recursion)', function() { C('A1').setCell(C('A2')); return C('A2').getValue(); }, recError),
             function() C('A1').setCell(10),
             new Test('C(A1).set(C(A1).set(1)) (no recursion)', function() C('A1').set(C('A1').set(1)).getValue(), 1),
             new Test('C(A1) (not modified by previous test)', function() C('A1').getValue(), 10),
-            new Test('C(A1).set(C(A1).setCell(1).add(1)) (no recursion)', function() C('A1').set(C('A1').setCell(1).add(1)).getValue(), 2),
-            new Test('C(A1) (modified by previous test)', function() C('A1').getValue(), 1),
-            new Test('C(A1).setCell(C(A1).setCell(1).add(1)) (no recursion)', function() C('A1').setCell(C('A1').setCell(1).add(1)).getValue(), 2),
-            new Test('C(A1) (modified by previous test)', function() C('A1').getValue(), 2),
         ]),
 
         new TestGroup('various set/get over ranges', [
@@ -161,7 +157,7 @@
             new Test('C(A1:A5)', function() C('A1', 'A5').getValues(), [1,1,undefined,undefined,undefined]),
             new Test('C(A1:A5).set(1)', function() C('A1', 'A5').set(1).getValues(), [1,1,1,1,1]),
             new Test('C(A1:A5) (not modified by previous test)', function() C('A1', 'A5').getValues(), [1,1,undefined,undefined,undefined]),
-            new Test('C(A1:A5).setCell(1)', function() C('A1', 'A5').setCell(1).getValues(), [1,1,1,1,1]),
+            new Test('C(A1:A5).setCell(1)', function() { C('A1', 'A5').setCell(1); return C('A1', 'A5').getValues(); }, [ 1,1,1,1,1 ]),
             new Test('C(A1:A5) (modified by previous test)', function() C('A1', 'A5').getValues(), [1,1,1,1,1]),
         ]),
 
@@ -174,7 +170,7 @@
             new Test('C(A1:A5) (not modified by previous test)', function() C('A1', 'A5').getValues(), [1,1,1,1,1]),
             new Test(
                 'C(A2:A5).setCell(function() this.ofs(0,-1).add(1))',
-                function() C('A2', 'A5').setCell(function() this.ofs(0,-1).add(1)).getValues(),
+                function() { C('A2', 'A5').setCell(function() this.ofs(0,-1).add(1)); return C('A2', 'A5').getValues(); },
                 [2,3,4,5]
             ),
             new Test('C(A1:A5) (modified by previous test)', function() C('A1', 'A5').getValues(), [1,2,3,4,5]),
@@ -199,17 +195,17 @@
         new TestGroup('test some cascaded operations', [
             new Test(
                 'C(A1).setCell(C(A1)).set(1) (no recursion)',
-                function() C('A1').setCell(C('A1')).set(1).getValue(),
+                function() { C('A1').setCell(C('A1')); return C('A1').set(1).getValue(); },
                 1
             ),
             new Test(
                 'C(A1).setCell(C(A1)).add(1) (recursion)',
-                function() C('A1').setCell(C('A1')).add(1).getValue(),
+                function() { C('A1').setCell(C('A1')); return C('A1').add(1).getValue(); },
                 recError
             ),
             new Test(
                 'C(A1).setCell(C(A1)).add(1).set(3).add(5) (no recursion)',
-                function() C('A1').setCell(C('A1')).add(1).set(3).add(5).getValue(),
+                function() { C('A1').setCell(C('A1')); return C('A1').add(1).set(3).add(5).getValue(); },
                 8
             ),
         ]),
@@ -271,9 +267,9 @@
         ),
         // add an overlapping range - setting cells in added range should change resulting values
         new Test(
-            'C(B1:D3).addRange(C(C2:E4).setCell(0)) (setCell() should have effect)',
-            function() C('B1', 'D3').addRange(C('C2', 'E4').setCell(0)).getValues(),
-            ['B1', 'B2', 'B3', 'C1', 0, 0, 0, 'D1', 0, 0, 0, 0, 0, 0]
+            'C(B1:D3).addRange(C(C2:E4).setCell(0)) (setCell() should have an effect)',
+            function() { C('C2', 'E4').setCell(0); return C('B1', 'D3').addRange(C('C2', 'E4')).getValues(); },
+            [ 'B1', 'B2', 'B3', 'C1', 0, 0, 0, 'D1', 0, 0, 0, 0, 0, 0 ]
         ),
         // reinit changed cells
         function() { for each (let r in _range(1, 10)) for each (let c in ['B','C','D','E']) C(c + r).setCell(c + r) },
@@ -283,12 +279,12 @@
         // ...add a cell offset
         new Test('C(B1:E9).grep(C5).ofs(1,1)', function() C('B1', 'E9').grep('C5').ofs(1,1).getValues(), ['D6']),
         new Test('C(B1:D3).ofs(1,1)', function() C('B1', 'D3').ofs(1,1).getValues(), ['C2', 'D2', 'E2', 'C3', 'D3', 'E3', 'C4', 'D4', 'E4']),
-        new Test('C(B1:E9).ofs(20,20)', function() C('B1', 'E9').ofs(20,20).getValues(), [undefined for (i in _range(0,36))]),
+        new Test('C(B1:E9).ofs(20,20)', function() C('B1', 'E9').ofs(20,20).getValues(), [ undefined for (i in _range(0,36)) ]),
 
         new Test(
             'C(A2).addRel(C(B1:E9).relTo(C(A1)))',
             function() C('A2').addRel(C('B1', 'E9').relTo(C('A1'))).getValues(),
-            [ c + r for each (c in ['B','C','D','E']) for (r in _range(2,10))].concat([undefined for (i in _range(0, 4))])
+            [ c + r for each (c in ['B','C','D','E']) for (r in _range(2,10))].concat([ undefined for (i in _range(0, 4)) ])
         ),
     ])
 
@@ -373,7 +369,7 @@
 
             new Test(
                 'C1= A1 * 3 + A2 * A3',
-                function() C('C1').setCell(C('A1').mult(3).add(C('A2').mult(C('A3')))).getValue(),
+                function() { C('C1').setCell(C('A1').mult(3).add(C('A2').mult(C('A3')))); return C('C1').getValue(); },
                 9
             ),
             new Test(
@@ -412,11 +408,11 @@
     if (_showTimer) console.profile('all tests')
 
     var statistic= new TestGroup('Tests', [
-//        test_SetGet,
-//        test_ranges,
-//        test_cellops,
+        test_SetGet,
+        test_ranges,
+        test_cellops,
         test_formel,
-//        test_sverweis,
+        test_sverweis,
     ]).run()
 
     if (_showTimer) console.profileEnd('all tests')
