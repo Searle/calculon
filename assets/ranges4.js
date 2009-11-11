@@ -3,7 +3,7 @@
 
     // if set to true, methods like set, add will modify the current atom
     // if set to false, those methods will create a new atom with current as parent
-    var __modifyAtoms= true
+    var __modifyAtoms= true && false
 
     // various debug output flags
     var __debugFlatten= false
@@ -343,8 +343,10 @@ if ( __debugDirty ) console.debug("_Atom.dirty: add", this._atomId, rangesToStri
     _Atom.prototype.getValue= function() this.getValues()[0]
 
     _Atom.prototype._getCellAtom= function( coord ) {
-        if ( !this._ownCell(coord) ) {
-            throw "Cannot get cellAtom of foreign cell " + coord[0] + ':' + coord[1]
+
+        // if we do not own this cell ask parent (if any)
+        if ( !this._ownCell(coord) && this._parent !== undefined ) {
+            return this._parent._getCellAtom(coord)
         }
         var key= coord[0] + ':' + coord[1]
         if ( this._cellAtoms[key] !== undefined ) return this._cellAtoms[key]
@@ -699,7 +701,7 @@ if ( __debugDirty ) console.debug("_Atom.dirty: add", this._atomId, rangesToStri
             }
 
             for each ( let range in parent.getFlattenedRanges() ) {
-                var cellValue= parent.getCellValue(range, this)
+                var cellValue= parent.getCellValue(range)
 
                 // FIXME: do something on error
                 if ( cellValue instanceof Error ) continue

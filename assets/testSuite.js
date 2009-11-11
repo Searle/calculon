@@ -131,7 +131,7 @@
             new Test('C(A1).setCell(2)', function() C('A1').setCell(2).getValue(), 2),
         ]),
 
-        new TestGroup('various set/get with atoms, resursion tests', [
+        new TestGroup('various set/get with atoms, recursion tests', [
             new Test('C(A2).set(C(A1))', function() C('A2').set(C('A1')).getValue(), 2),
             new Test('C(A2) (not modified by previous test)', function() C('A2').getValue(), undefined),
             new Test('C(A2).setCell(C(A1))', function() C('A2').setCell(C('A1')).getValue(), 2),
@@ -362,6 +362,28 @@
         ])
     })()
 
+    var test_formel= (function() {
+
+        return new TestGroup('formeln', [
+            function() {
+                C('A1').setCell(1)
+                C('A2', 'A5').setCell(function() this.ofs(0,-1).add(1))
+                C('B1', 'B5').setCell(function() this.ofs(-1,0).add(20))
+            },
+
+            new Test(
+                'C1= A1 * 3 + A2 * A3',
+                function() C('C1').setCell(C('A1').mult(3).add(C('A2').mult(C('A3')))).getValue(),
+                9
+            ),
+            new Test(
+                'SUMMEWENN(A1:A5, gerade, B1:B5)',
+                function() C('A1', 'A5').grep(function(v) !(v%2)).ofs(1,0).sum().getValue(),
+                46
+            ),
+        ])
+    })()
+
     var test_sverweis= (function() {
         var SVERWEIS= function ( searchRanges, value, col_i ) searchRanges.crop(0, 0, 0, Number.MAX_VALUE).grep(value).ofs(col_i, 0)
 
@@ -390,10 +412,11 @@
     if (_showTimer) console.profile('all tests')
 
     var statistic= new TestGroup('Tests', [
-        test_SetGet,
-        test_ranges,
-        test_cellops,
-        test_sverweis,
+//        test_SetGet,
+//        test_ranges,
+//        test_cellops,
+        test_formel,
+//        test_sverweis,
     ]).run()
 
     if (_showTimer) console.profileEnd('all tests')
