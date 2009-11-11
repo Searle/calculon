@@ -700,7 +700,12 @@ if ( __debugDirty ) console.debug("_Atom.dirty: add", this._atomId, rangesToStri
 
             for each ( let range in parent.getFlattenedRanges() ) {
                 var cellValue= parent.getCellValue(range, this)
+
+                // FIXME: do something on error
+                if ( cellValue instanceof Error ) continue
+
                 if ( _isFunction(value) ) {
+                    // call function with cellAtom as "this" and cellValue as parameter, make it recursion save
                     var result= parent._recursionSave(function() value.call(parent._getCellAtom(range), cellValue))
                     if ( result instanceof Error ) throw "Error in grep function: " + result.message
                     if ( result ) newRanges.push(range)
@@ -871,6 +876,9 @@ if ( __debugDirty ) console.debug("_Atom.dirty: add", this._atomId, rangesToStri
         console.log(cells)
     }
 
+    // FIXME: prevent V from being modified (addRange, set etc. - most important: setCell!)
+    // may be it should get it's own class derived from atom,
+    // providing getValues() and throwing exceptions on getRanges()
     V= function ( value ) (new _Atom).addRange( 1, 1 ).set(value)
 
     A= function ( i ) atoms[i]
