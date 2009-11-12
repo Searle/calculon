@@ -160,19 +160,6 @@ function SVERWEIS(searchR, value, col_i) {
 
 ------------------------------------------------------------------------------
 
-function SCHNITT() {
-    // ?
-}
-
-
-Range
-    = Cell
-Offset
-Value
-
-
-
-
 problem: B1= sum(B2:B9); C1= sum(C2:C9)...
 
 fuer eine Zeile:
@@ -195,12 +182,16 @@ alternativ zu "this": "cell", "range", "sheet"
 C('B1', 'E1').assign(C('B2', 'E2').add(C('B3', 'E3')).add(C('B4', 'E4')))
 
 
+------------------------------------------------------------------------------
+
 problem: A1:B2= A11:B12 + A21:B22
 
 moeglich syntax
 [ 1, 1 : 2, 2 ]= [ this.x, this.y+10 ] + [ this.x, this.y+20 ]  => C(A1:B2).assign(function() this.ofs(0,10).add(this.ofs(0,20)))
 [ 1, 1 : 2, 2 ]= [ _, _+10 ] + [ _, _+20 ]
 
+
+------------------------------------------------------------------------------
 
 Problem:
 Name | Vorname | Alter | Gewicht
@@ -214,8 +205,23 @@ var rel_name_gewicht= gewicht.relTo(name)
 name.expandRange(0, 0, 0, 100).grep('hu').addRel(rel_name).getValue()
 
 
+------------------------------------------------------------------------------
 
+function VLOOKUP(topleft, lookupCaption, resultCaption, lookupValue) {
+    var firstEmpty= topleft.grep(Empty)
 
+    var titleRow= topleft
+        .expandTo(topleft.expandRanges([ 0, 0, Inf, 0 ]).findFirst(undefined))
+
+    var lookupCol= titleRow.grep(lookupCaption)
+    var resultCol= titleRow.grep(resultCaption)
+
+    return lookupCol
+        .expandTo(lookupCol.expandRanges([ 0, 0, 0, Inf ]).findFirst(undefined))
+        .crop([ 0, 1, 0, 0 ])
+        .grep(lookupCaption)
+        .addRel(resultCol.relTo(lookupCol))
+}
 
 ------------------------------------------------------------------------------
 
