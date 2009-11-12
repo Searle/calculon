@@ -352,8 +352,6 @@
             // TODO: should this work without ...getValue()?
             function() C('B1').setCell(0),
             new Test('C("B1").grep(C("B1").set(8))', function() C('B1').grep(C('B1').set(8)).getValues(), []),
-            function() C('B1').setCell(0),
-            new Test('C("B1").grep(C("B1").setCell(8))', function() C('B1').grep(C('B1').setCell(8)).getValues(), [8]),
 
             function() C('B1').setCell(0),
             new Test('C("B1:E9").grep(0).set(1).grep(1).set(8)', function() C('B1', 'E9').grep(0).set(1).grep(1).set(8).getValues(), [8]),
@@ -393,6 +391,7 @@
                 for each (let r in _range(1, 10)) for each (let c in ['B','C','D','E']) C(c + r).setCell(c + r)
             },
 
+            new Test('', "C('B1:E9').getValues()", []),
             new Test('SVERWEIS("B1:E9", "B6", 2)', function() SVERWEIS(C('B1', 'E9'), 'B6', 2).getValues(), ['D6']),
             function() C('B3').setCell('B6'),
             new Test('SVERWEIS("B1:E9", "B6", 2) (2 results)', function() SVERWEIS(C('B1', 'E9'), 'B6', 2).getValues(), ['D3', 'D6']),
@@ -445,11 +444,11 @@
     if (_showTimer) console.profile('all tests')
 
     var statistic= new TestGroup('Tests', [
-//        test_SetGet,
-//        test_ranges,
-//        test_cellops,
-//        test_formel,
-//        test_sverweis,
+        test_SetGet,
+        test_ranges,
+        test_cellops,
+        test_formel,
+        test_sverweis,
         test_lookup,
     ]).run()
 
