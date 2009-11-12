@@ -98,6 +98,11 @@
             }
         }
 
+        if ( typeof fn === 'string' ) {
+            title= fn + (title === '' ? '' : ' (' + title + ')')
+            eval('fn=function() ' + fn);
+        }
+
         this.run= function(prefix) {
             // do not show error messages
             var fnError= console.Error
@@ -124,88 +129,88 @@
 
     var test_SetGet= new TestGroup('set/get', [
         new TestGroup('various set/get with constants', [
-            new Test('C(A1) (undefined cell)', function() C('A1').getValue(), undefined),
-            new Test('C(A1).set(1)', function() C('A1').set(1).getValue(), 1),
-            new Test('C(A1) (not modified by previous test)', function() C('A1').getValue(), undefined),
-            new Test('C(A1).setCell(1); C(A1)', function() {C('A1').setCell(1); return C('A1').getValue()}, 1),
-            new Test('C(A1).setCell(2)', function() { C('A1').setCell(2); return C('A1').getValue(); }, 2),
+            new Test('undefined cell',  "C('A1').getValue()",  undefined),
+            new Test('one',  "C('A1').set(1).getValue()",  1),
+            new Test('not modified by previous test',  "C('A1').getValue()",  undefined),
+            new Test('',  "{ C('A1').setCell(1); return C('A1').getValue(); }",  1),
+            new Test('',  "{ C('A1').setCell(2); return C('A1').getValue(); }",  2),
         ]),
 
         new TestGroup('various set/get with atoms, recursion tests', [
-            new Test('C(A2).set(C(A1))', function() C('A2').set(C('A1')).getValue(), 2),
-            new Test('C(A2) (not modified by previous test)', function() C('A2').getValue(), undefined),
-            new Test('C(A2).setCell(C(A1))', function() { C('A2').setCell(C('A1')); return C('A2').getValue(); }, 2),
-            new Test('C(A2) (modified by previous test)', function() C('A2').getValue(), 2),
-            new Test('C(A1).setCell(5); C(A2)', function() { C('A1').setCell(5); return C('A2').getValue(); }, 5),
-            new Test('C(A2).set(C(A2)) (no recursion)', function() C('A2').set(C('A2')).getValue(), 5),
-            new Test('var a= C(A2); a.set(a) (recursion)', function() {var a= C('A2'); return a.set(a).getValue()}, 5), // "5" for separate set-atom; recError else
-            new Test('C(A1).set(C(A2)) (no recursion)', function() C('A1').set(C('A2')).getValue(), 5),
-            new Test('C(A2).setCell(C(A2)) (recursion)', function() { C('A2').setCell(C('A2')); return C('A2').getValue(); }, recError),
-            new Test('var a= C(A2); a.setCell(a) (recursion)', function() { var a= C('A2'); a.setCell(a); return a.getValue(); }, recError), // "5" for separate set-atom; recError else
-            new Test('var a= C(A2); a.setCell(a.set(7)) (recursion)', function() { var a= C('A2'); a.setCell(a.set(7)); return a.getValue(); }, 7), // "7" for separate set-atom; recError else
-            new Test('var a= C(A2).set(5); var b= a.add(7); [a,b]', function() { var a= C('A2').set(5); var b=a.add(7); return [ a.getValue(), b.getValue() ]}, [ 5, 12 ], _compareArray), // [5,12] for separate set-atom; [12,12] else
+            new Test('',  "C('A2').set(C('A1')).getValue()",  2),
+            new Test('not modified by previous test',  "C('A2').getValue()",  undefined),
+            new Test('',  "{ C('A2').setCell(C('A1')); return C('A2').getValue(); }",  2),
+            new Test('modified by previous test',  "C('A2').getValue()",  2),
+            new Test('',  "{ C('A1').setCell(5); return C('A2').getValue(); }",  5),
+            new Test('no recursion',  "C('A2').set(C('A2')).getValue()",  5),
+            new Test('recursion',  "{ var a= C('A2'); return a.set(a).getValue(); }", 5), // "5" for separate set-atom; recError else
+            new Test('no recursion',  "C('A1').set(C('A2')).getValue()", 5),
+            new Test('recursion',  "{ C('A2').setCell(C('A2')); return C('A2').getValue(); }", recError),
+            new Test('recursion',  "{ var a= C('A2'); a.setCell(a); return a.getValue(); }", recError), // "5" for separate set-atom; recError else
+            new Test('recursion',  "{ var a= C('A2'); a.setCell(a.set(7)); return a.getValue(); }", 7), // "7" for separate set-atom; recError else
+            new Test('',  "{ var a= C('A2').set(5); var b=a.add(7); return [ a.getValue(), b.getValue() ]; }", [ 5, 12 ], _compareArray), // [5,12] for separate set-atom; [12,12] else
             // restore cell values
-            function() { C('A1').setCell(5); C('A2').setCell(C('A1'))},
-            new Test('C(A1).setCell(C(A2)) (recursion)', function() { C('A1').setCell(C('A2')); return C('A2').getValue(); }, recError),
+            function() { C('A1').setCell(5); C('A2').setCell(C('A1')) },
+            new Test('recursion',  "{ C('A1').setCell(C('A2')); return C('A2').getValue(); }", recError),
             function() C('A1').setCell(10),
-            new Test('C(A1).set(C(A1).set(1)) (no recursion)', function() C('A1').set(C('A1').set(1)).getValue(), 1),
-            new Test('C(A1) (not modified by previous test)', function() C('A1').getValue(), 10),
+            new Test('no recursion', "C('A1').set(C('A1').set(1)).getValue()", 1),
+            new Test('not modified by previous test', "C('A1').getValue()", 10),
         ]),
 
         new TestGroup('various set/get over ranges', [
             function() { C('A1').setCell(1); C('A2').setCell(1) },
-            new Test('C(A1:A5)', function() C('A1', 'A5').getValues(), [1,1,undefined,undefined,undefined]),
-            new Test('C(A1:A5).set(1)', function() C('A1', 'A5').set(1).getValues(), [1,1,1,1,1]),
-            new Test('C(A1:A5) (not modified by previous test)', function() C('A1', 'A5').getValues(), [1,1,undefined,undefined,undefined]),
-            new Test('C(A1:A5).setCell(1)', function() { C('A1', 'A5').setCell(1); return C('A1', 'A5').getValues(); }, [ 1,1,1,1,1 ]),
-            new Test('C(A1:A5) (modified by previous test)', function() C('A1', 'A5').getValues(), [1,1,1,1,1]),
+            new Test('', "C('A1', 'A5').getValues()", [ 1, 1, undefined, undefined, undefined ]),
+            new Test('', "C('A1', 'A5').set(1).getValues()", [ 1, 1, 1, 1, 1 ]),
+            new Test('not modified by previous test', "C('A1', 'A5').getValues()", [ 1, 1, undefined, undefined, undefined ]),
+            new Test('', "{ C('A1', 'A5').setCell(1); return C('A1', 'A5').getValues(); }", [ 1, 1, 1, 1, 1 ]),
+            new Test('modified by previous test', "C('A1', 'A5').getValues()", [ 1, 1, 1, 1, 1 ]),
         ]),
 
         new TestGroup('various set/get over ranges with atom references', [
             new Test(
-                'C(A2:A5).set(function() this.ofs(0,-1).add(1))',
-                function() C('A2', 'A5').set(function() this.ofs(0,-1).add(1)).getValues(),
-                [2,3,4,5]
+                '',
+                "C('A2', 'A5').set(function() this.ofs(0,-1).add(1)).getValues()",
+                [ 2, 3, 4, 5 ]
             ),
-            new Test('C(A1:A5) (not modified by previous test)', function() C('A1', 'A5').getValues(), [1,1,1,1,1]),
+            new Test('not modified by previous test', "C('A1', 'A5').getValues()", [ 1, 1, 1, 1, 1 ]),
             new Test(
-                'C(A2:A5).setCell(function() this.ofs(0,-1).add(1))',
-                function() { C('A2', 'A5').setCell(function() this.ofs(0,-1).add(1)); return C('A2', 'A5').getValues(); },
-                [2,3,4,5]
+                '',
+                "{ C('A2', 'A5').setCell(function() this.ofs(0,-1).add(1)); return C('A2', 'A5').getValues(); }",
+                [ 2, 3, 4, 5 ]
             ),
-            new Test('C(A1:A5) (modified by previous test)', function() C('A1', 'A5').getValues(), [1,2,3,4,5]),
+            new Test('modified by previous test', "C('A1', 'A5').getValues()", [ 1, 2, 3, 4, 5 ]),
             new Test(
-                'C(A1:A5).set(function() this) (recursion)',
-                function() C('A1', 'A5').set(function() this).getValues(),
-                [recError,recError,recError,recError,recError]
-            ),
-            new Test(
-                'C(A1:A5).set(function() this.ofs(0,0)) (recursion)',
-                function() C('A1', 'A5').set(function() this.ofs(0,0)).getValues(),
-                [recError,recError,recError,recError,recError]
+                'recursion',
+                "C('A1', 'A5').set(function() this).getValues()",
+                [ recError, recError, recError, recError, recError ]
             ),
             new Test(
-                'C(A1:A5).set(function() this.ofs(1,1).ofs(-1,-1)) (recursion)',
-                function() C('A1', 'A5').set(function() this.ofs(1,1).ofs(-1,-1)).getValues(),
-                [recError,recError,recError,recError,recError]
+                'recursion',
+                "C('A1', 'A5').set(function() this.ofs(0,0)).getValues()",
+                [ recError, recError, recError, recError, recError ]
             ),
-            new Test('C(A1:A5) (not modified by previous tests)', function() C('A1', 'A5').getValues(), [1,2,3,4,5]),
+            new Test(
+                'recursion',
+                "C('A1', 'A5').set(function() this.ofs(1,1).ofs(-1,-1)).getValues()",
+                [ recError, recError, recError, recError, recError ]
+            ),
+            new Test('not modified by previous tests', "C('A1', 'A5').getValues()", [ 1, 2, 3, 4, 5 ]),
         ]),
 
         new TestGroup('test some cascaded operations', [
             new Test(
-                'C(A1).setCell(C(A1)).set(1) (no recursion)',
-                function() { C('A1').setCell(C('A1')); return C('A1').set(1).getValue(); },
+                'no recursion',
+                "{ C('A1').setCell(C('A1')); return C('A1').set(1).getValue(); }",
                 1
             ),
             new Test(
-                'C(A1).setCell(C(A1)).add(1) (recursion)',
-                function() { C('A1').setCell(C('A1')); return C('A1').add(1).getValue(); },
+                'recursion',
+                "{ C('A1').setCell(C('A1')); return C('A1').add(1).getValue(); }",
                 recError
             ),
             new Test(
-                'C(A1).setCell(C(A1)).add(1).set(3).add(5) (no recursion)',
-                function() { C('A1').setCell(C('A1')); return C('A1').add(1).set(3).add(5).getValue(); },
+                'no recursion',
+                "{ C('A1').setCell(C('A1')); return C('A1').add(1).set(3).add(5).getValue(); }",
                 8
             ),
         ]),
@@ -213,11 +218,11 @@
         new TestGroup('test cache invalidation on cell change and string operations', [
             function() C('A1').setCell(1),
             function() C('A2', 'A5').setCell(function() this.ofs(0,-1).add(1)),
-            new Test('C(A2) (first cell is a number)', function() C('A2').getValue(), 2),
-            new Test('C(A5) (first cell is a number)', function() C('A5').getValue(), 5),
+            new Test('first cell is a number', "C('A2').getValue()", 2),
+            new Test('first cell is a number', "C('A5').getValue()", 5),
             function() C('A1').setCell('1'),
-            new Test('C(A2) (first cell is a string)', function() C('A2').getValue(), '11'),
-            new Test('C(A5) (first cell is a string)', function() C('A5').getValue(), '11111'),
+            new Test('first cell is a string', "C('A2').getValue()", '11'),
+            new Test('first cell is a string', "C('A5').getValue()", '11111'),
         ]),
     ])
 
