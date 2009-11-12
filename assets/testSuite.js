@@ -415,12 +415,12 @@
                    C('D1').setCell('Gewicht')
                 C('A2').setCell('zuppi')
                  C('B2').setCell('zappi')
-                  C('C2').setCell('78')
-                   C('D2').setCell('85')
-                C('A2').setCell('huhu')
-                 C('B2').setCell('steppi')
-                  C('C2').setCell('7')
-                   C('D2').setCell('97')
+                  C('C2').setCell(78)
+                   C('D2').setCell(85)
+                C('A3').setCell('huhu')
+                 C('B3').setCell('steppi')
+                  C('C3').setCell(7)
+                   C('D3').setCell(97)
             },
 
             new Test(
@@ -430,8 +430,7 @@
                     var name= title.grep('Name')
                     var weight= title.grep('Gewicht')
                     var rel_name_weight= weight.relTo(name)
-                    return name.expandRanges(0,0,0,4).ofs(0,1).getValues()
-                    return name.expandRanges(0,0,0,100).ofs(0,1).grep('huhu').addRel(rel_name_weight).getValue()
+                    return name.expandRanges([0,0,0,10]).ofs(0,1).grep('huhu').addRel(rel_name_weight).getValue()
                 },
                 97
             ),
@@ -441,7 +440,7 @@
     if (_showTimer) console.profile('all tests')
 
     var statistic= new TestGroup('Tests', [
-        test_SetGet,
+//        test_SetGet,
 //        test_ranges,
 //        test_cellops,
 //        test_formel,

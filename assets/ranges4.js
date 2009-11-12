@@ -545,15 +545,16 @@ if ( __debugDirty ) console.debug("_Atom.dirty: add", this._atomId, rangesToStri
 
         this.getRanges= function() {
             var ranges= parent.getRanges()
+            var newRanges= []
             for ( let i in ranges ) {
-                ranges[i][0]-= expRange[0]
-                if ( ranges[i][0] < 0 ) ranges[i][0]= 0
-                ranges[i][1]-= expRange[1]
-                if ( ranges[i][1] < 0 ) ranges[i][1]= 0
-                ranges[i][2]+= expRange[2]
-                ranges[i][3]+= expRange[3]
+                newRanges.push([
+                    ranges[i][0] > expRange[0] ? ranges[i][0] - expRange[0] : 0,
+                    ranges[i][1] > expRange[1] ? ranges[i][1] - expRange[1] : 0,
+                    ranges[i][2] + expRange[2],
+                    ranges[i][3] + expRange[3],
+                ])
             }
-            return ranges
+            return newRanges
         }
     }
 
