@@ -391,7 +391,11 @@
                 for each (let r in _range(1, 10)) for each (let c in ['B','C','D','E']) C(c + r).setCell(c + r)
             },
 
-            new Test('', "C('B1:E9').getValues()", []),
+            new Test(
+                '',
+                "C('B1', 'E9').getValues()",
+                (function() { let res= []; for each (let r in _range(1, 10)) res= res.concat([ c+r for each (c in ['B','C','D','E'])]); return res; })()
+            ),
             new Test('SVERWEIS("B1:E9", "B6", 2)', function() SVERWEIS(C('B1', 'E9'), 'B6', 2).getValues(), ['D6']),
             function() C('B3').setCell('B6'),
             new Test('SVERWEIS("B1:E9", "B6", 2) (2 results)', function() SVERWEIS(C('B1', 'E9'), 'B6', 2).getValues(), ['D3', 'D6']),
@@ -414,17 +418,17 @@
         return new TestGroup('lookup', [
             function() {
                 C('A1').setCell('Name')
-                 C('B1').setCell('Vorname')
-                  C('C1').setCell('Alter')
-                   C('D1').setCell('Gewicht')
+                  C('B1').setCell('Vorname')
+                    C('C1').setCell('Alter')
+                      C('D1').setCell('Gewicht')
                 C('A2').setCell('zuppi')
-                 C('B2').setCell('zappi')
-                  C('C2').setCell(78)
-                   C('D2').setCell(85)
+                  C('B2').setCell('zappi')
+                    C('C2').setCell(78)
+                      C('D2').setCell(85)
                 C('A3').setCell('huhu')
-                 C('B3').setCell('steppi')
-                  C('C3').setCell(7)
-                   C('D3').setCell(97)
+                  C('B3').setCell('steppi')
+                    C('C3').setCell(7)
+                      C('D3').setCell(97)
             },
 
             new Test(
