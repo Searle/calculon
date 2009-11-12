@@ -230,65 +230,65 @@
         function() { for each (let r in _range(1, 10)) for each (let c in ['B','C','D','E']) C(c + r).setCell(c + r) },
         // get range values
         new Test(
-            'C(B1:D3)',
-            function() C('B1', 'D3').getValues(),
+            '',
+            "C('B1', 'D3').getValues()",
             ['B1', 'B2', 'B3', 'C1', 'C2', 'C3', 'D1', 'D2', 'D3']
         ),
         // add an already included cell
         new Test(
-            'C(B1:D3).addRange(C(B1))',
-            function() C('B1', 'D3').addRange(C('B1')).getValues(),
+            '',
+            "C('B1', 'D3').addRange(C('B1')).getValues()",
             ['B1', 'B2', 'B3', 'C1', 'C2', 'C3', 'D1', 'D2', 'D3']
         ),
         // add a not included cell
         new Test(
-            'C(B1:D3).addRange(C(D5))',
-            function() C('B1', 'D3').addRange(C('D5')).getValues(),
+            '',
+            "C('B1', 'D3').addRange(C('D5')).getValues()",
             ['B1', 'B2', 'B3', 'C1', 'C2', 'C3', 'D1', 'D2', 'D3', 'D5']
         ),
         // add the same range again
         new Test(
-            'C(B1:D3).addRange(C(B1:D3))',
-            function() C('B1', 'D3').addRange(C('B1', 'D3')).getValues(),
+            '',
+            "C('B1', 'D3').addRange(C('B1', 'D3')).getValues()",
             ['B1', 'B2', 'B3', 'C1', 'C2', 'C3', 'D1', 'D2', 'D3']
         ),
         // add an overlapping range
         new Test(
-            'C(B1:D3).addRange(C(C2:E4))',
-            function() C('B1', 'D3').addRange(C('C2', 'E4')).getValues(),
+            '',
+            "C('B1', 'D3').addRange(C('C2', 'E4')).getValues()",
             ['B1', 'B2', 'B3', 'C1', 'C2', 'C3', 'C4', 'D1', 'D2', 'D3', 'D4', 'E2', 'E3', 'E4']
         ),
         // add an overlapping range and mask new cells
         new Test(
-            'C(B1:D3).addRange(C(B2:E4)).range(C(B1:D3))',
-            function() C('B1', 'D3').addRange(C('C2', 'E4')).range(C('B1', 'D3')).getValues(),
+            '',
+            "C('B1', 'D3').addRange(C('C2', 'E4')).range(C('B1', 'D3')).getValues()",
             ['B1', 'B2', 'B3', 'C1', 'C2', 'C3', 'D1', 'D2', 'D3']
         ),
         // add an overlapping range - setting the added range should have no effect
         new Test(
-            'C(B1:D3).addRange(C(C2:E4).set(0)) (set() should have no effect)',
-            function() C('B1', 'D3').addRange(C('C2', 'E4').set(0)).getValues(),
+            '(set() should have no effect)',
+            "C('B1', 'D3').addRange(C('C2', 'E4').set(0)).getValues()",
             ['B1', 'B2', 'B3', 'C1', 'C2', 'C3', 'C4', 'D1', 'D2', 'D3', 'D4', 'E2', 'E3', 'E4']
         ),
         // add an overlapping range - setting cells in added range should change resulting values
         new Test(
-            'C(B1:D3).addRange(C(C2:E4).setCell(0)) (setCell() should have an effect)',
-            function() { C('C2', 'E4').setCell(0); return C('B1', 'D3').addRange(C('C2', 'E4')).getValues(); },
+            '(setCell() should have an effect)',
+            "{ C('C2', 'E4').setCell(0); return C('B1', 'D3').addRange(C('C2', 'E4')).getValues(); }",
             [ 'B1', 'B2', 'B3', 'C1', 0, 0, 0, 'D1', 0, 0, 0, 0, 0, 0 ]
         ),
         // reinit changed cells
         function() { for each (let r in _range(1, 10)) for each (let c in ['B','C','D','E']) C(c + r).setCell(c + r) },
 
         // grep a single cell out of a range
-        new Test('C(B1:E9).grep(C5)', function() C('B1', 'E9').grep('C5').getValues(), ['C5']),
+        new Test('', "C('B1', 'E9').grep('C5').getValues()", ['C5']),
         // ...add a cell offset
-        new Test('C(B1:E9).grep(C5).ofs(1,1)', function() C('B1', 'E9').grep('C5').ofs(1,1).getValues(), ['D6']),
-        new Test('C(B1:D3).ofs(1,1)', function() C('B1', 'D3').ofs(1,1).getValues(), ['C2', 'D2', 'E2', 'C3', 'D3', 'E3', 'C4', 'D4', 'E4']),
-        new Test('C(B1:E9).ofs(20,20)', function() C('B1', 'E9').ofs(20,20).getValues(), [ undefined for (i in _range(0,36)) ]),
+        new Test('', "C('B1', 'E9').grep('C5').ofs(1,1).getValues()", ['D6']),
+        new Test('', "C('B1', 'D3').ofs(1,1).getValues()", ['C2', 'D2', 'E2', 'C3', 'D3', 'E3', 'C4', 'D4', 'E4']),
+        new Test('', "C('B1', 'E9').ofs(20,20).getValues()", [ undefined for (i in _range(0,36)) ]),
 
         new Test(
-            'C(A2).addRel(C(B1:E9).relTo(C(A1)))',
-            function() C('A2').addRel(C('B1', 'E9').relTo(C('A1'))).getValues(),
+            '',
+            "C('A2').addRel(C('B1', 'E9').relTo(C('A1'))).getValues()",
             [ c + r for each (c in ['B','C','D','E']) for (r in _range(2,10))].concat([ undefined for (i in _range(0, 4)) ])
         ),
     ])
@@ -318,48 +318,46 @@
                 var i= 0
                 for each (let r in _range(1, 10)) for each (let c in ['B','C','D','E']) C(c + r).setCell(i++)
             },
-            new Test('C("B1:E9")', function() C('B1', 'E9').getValues(), expected),
-            new Test('C("B1:E9").sum()', function() C('B1', 'E9').sum().getValue(), sum),
-            new Test('C("B1:E9").add(3)', function() C('B1', 'E9').add(3).getValues(), expectedP3),
-            new Test('C("B1:E9").add(1).add(2)', function() C('B1', 'E9').add(1).add(2).getValues(), expectedP3),
-            new Test('C("B1:E9").add(3).sum()', function() C('B1', 'E9').add(3).sum().getValue(), sum + 3 * expected.length),
+            new Test('', "C('B1', 'E9').getValues()", expected),
+            new Test('', "C('B1', 'E9').sum().getValue()", sum),
+            new Test('', "C('B1', 'E9').add(3).getValues()", expectedP3),
+            new Test('', "C('B1', 'E9').add(1).add(2).getValues()", expectedP3),
+            new Test('', "C('B1', 'E9').add(3).sum().getValue()", sum + 3 * expected.length),
 
-            new Test('C("B1:F10")', function() C('B1', 'F10').getValues(), expected2),
-            new Test('C("B1:F10").sum()', function() C('B1', 'F10').sum().getValue(), sum),
-            new Test('C("B1:F10").add(3)', function() C('B1', 'F10').add(3).getValues(), expected2P3),
-            new Test('C("B1:F10").add(1).add(2)', function() C('B1', 'F10').add(1).add(2).getValues(), expected2P3),
-            new Test('C("B1:F10").add(3).sum()', function() C('B1', 'F10').add(3).sum().getValue(), sum + 3 * expected2.length),
+            new Test('', "C('B1', 'F10').getValues()", expected2),
+            new Test('', "C('B1', 'F10').sum().getValue()", sum),
+            new Test('', "C('B1', 'F10').add(3).getValues()", expected2P3),
+            new Test('', "C('B1', 'F10').add(1).add(2).getValues()", expected2P3),
+            new Test('', "C('B1', 'F10').add(3).sum().getValue()", sum + 3 * expected2.length),
 
-            new Test('C("B1:E1").add(100).ofs(0,1)', function() C('B1', 'E1').add(100).ofs(0,1).getValues(), [4, 5, 6, 7]),
-            new Test('C("B1:E1").add(100).ofs(0,1).add(200)', function() C('B1', 'E1').add(100).ofs(0,1).add(200).getValues(), [204, 205, 206, 207]),
+            new Test('', "C('B1', 'E1').add(100).ofs(0,1).getValues()", [4, 5, 6, 7]),
+            new Test('', "C('B1', 'E1').add(100).ofs(0,1).add(200).getValues()", [204, 205, 206, 207]),
             new Test(
-                'C("B1:E1").add(100).ofs(0,1).add(200).ofs(0,-1)',
-                function() C('B1', 'E1').add(100).ofs(0,1).add(200).ofs(0,-1).getValues(),
+                '',
+                "C('B1', 'E1').add(100).ofs(0,1).add(200).ofs(0,-1).getValues()",
                 [100, 101, 102, 103]
             ),
 
-            new Test('C("B1:E9").prod()', function() C('B1', 'E9').prod().getValue(), 0),
-            new Test('C("B2:E9")', function() C('B2', 'E9').getValues(), expected.filter(function(v) v > 3)),
-            new Test('C("B2:E9").addRange("C1:E9")', function() C('B2', 'E9').addRange('C1', 'E9').getValues(), expected.filter(function(v) v)),
-            new Test('C("B2:E9").prod()', function() C('B2', 'E9').prod().getValue(), prod / 6),
-            new Test('C("B2:E9").addRange("C1:E9").prod()', function() C('B2', 'E9').addRange('C1', 'E9').prod().getValue(), prod),
-            new Test('C("B2:F10").prod()', function() C('B2', 'F10').prod().getValue(), prod / 6),
-            new Test('C("B2:F10").addRange("C1:F10").prod()', function() C('B2', 'F10').addRange('C1', 'F10').prod().getValue(), prod),
+            new Test('', "C('B1', 'E9').prod().getValue()", 0),
+            new Test('', "C('B2', 'E9').getValues()", expected.filter(function(v) v > 3)),
+            new Test('', "C('B2', 'E9').addRange('C1', 'E9').getValues()", expected.filter(function(v) v)),
+            new Test('', "C('B2', 'E9').prod().getValue()", prod / 6),
+            new Test('', "C('B2', 'E9').addRange('C1', 'E9').prod().getValue()", prod),
+            new Test('', "C('B2', 'F10').prod().getValue()", prod / 6),
+            new Test('', "C('B2', 'F10').addRange('C1', 'F10').prod().getValue()", prod),
 
-            new Test('C("B1").add(1).addRange("B1:E9").prod()', function() C('B1').add(1).addRange('B1', 'E9').prod().getValue(), prod),
-            new Test('C("B1:E9").grep(0)', function() C('B1', 'E9').grep(0).getValues(), [0]),
+            new Test('', "C('B1').add(1).addRange('B1', 'E9').prod().getValue()", prod),
+            new Test('', "C('B1', 'E9').grep(0).getValues()", [0]),
 
             // TODO: should this work without ...getValue()?
             function() C('B1').setCell(0),
-            new Test('C("B1").grep(C("B1").set(8))', function() C('B1').grep(C('B1').set(8)).getValues(), []),
-            function() C('B1').setCell(0),
-            new Test('C("B1").grep(C("B1").setCell(8))', function() C('B1').grep(C('B1').setCell(8)).getValues(), [8]),
+            new Test('', "C('B1').grep(C('B1').set(8)).getValues()", []),
 
             function() C('B1').setCell(0),
-            new Test('C("B1:E9").grep(0).set(1).grep(1).set(8)', function() C('B1', 'E9').grep(0).set(1).grep(1).set(8).getValues(), [8]),
+            new Test('', "C('B1', 'E9').grep(0).set(1).grep(1).set(8).getValues()", [8]),
             function() C('B1').setCell(0),
-            new Test('C("B1:E9").grep(0).set(1).addRange("B1:E9").prod()', function() C('B1', 'E9').grep(0).set(1).addRange('B1', 'E9').prod().getValue(), prod),
-            new Test('C("B1")', function() C('B1').getValue(), 0),
+            new Test('', "C('B1', 'E9').grep(0).set(1).addRange('B1', 'E9').prod().getValue()", prod),
+            new Test('', "C('B1').getValue()", 0),
         ])
     })()
 
@@ -373,8 +371,8 @@
             },
 
             new Test(
-                'C1= A1 * 3 + A2 * A3',
-                function() { C('C1').setCell(C('A1').mult(3).add(C('A2').mult(C('A3')))); return C('C1').getValue(); },
+                '',
+                "{ C('C1').setCell(C('A1').mult(3).add(C('A2').mult(C('A3')))); return C('C1').getValue(); }",
                 9
             ),
             new Test(
@@ -386,7 +384,7 @@
     })()
 
     var test_sverweis= (function() {
-        var SVERWEIS= function ( searchRanges, value, col_i ) searchRanges.crop(0, 0, 0, Number.MAX_VALUE).grep(value).ofs(col_i, 0)
+        var SVERWEIS= function ( searchRanges, value, col_i ) searchRanges.crop([ 0, 0, 0, Number.MAX_VALUE ]).grep(value).ofs(col_i, 0)
 
         return new TestGroup('sverweis test', [
             function() {
@@ -445,11 +443,11 @@
     if (_showTimer) console.profile('all tests')
 
     var statistic= new TestGroup('Tests', [
-//        test_SetGet,
-//        test_ranges,
-//        test_cellops,
-//        test_formel,
-//        test_sverweis,
+        test_SetGet,
+        test_ranges,
+        test_cellops,
+        test_formel,
+        test_sverweis,
         test_lookup,
     ]).run()
 
