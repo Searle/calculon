@@ -621,7 +621,7 @@ if ( __debugDirty ) console.debug("_Atom.dirty: add", this._atomId, rangesToStri
         }
     }
 
-    _Atom.extend('crop', _Crop, function(x0, y0, x1, y1) new _Crop(this, x0, y0, x1, y1))
+    _Atom.extend('crop', _Crop, function(cropRange) new _Crop(this, cropRange))
 
 
 // =============================================================================
