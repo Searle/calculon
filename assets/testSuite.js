@@ -138,12 +138,12 @@
             new Test('C(A2) (modified by previous test)', function() C('A2').getValue(), 2),
             new Test('C(A1).setCell(5); C(A2)', function() { C('A1').setCell(5); return C('A2').getValue(); }, 5),
             new Test('C(A2).set(C(A2)) (no recursion)', function() C('A2').set(C('A2')).getValue(), 5),
-            new Test('var a= C(A2); a.set(a) (recursion)', function() {var a= C('A2'); return a.set(a).getValue()}, recError), // "5" for separate set-atom
+            new Test('var a= C(A2); a.set(a) (recursion)', function() {var a= C('A2'); return a.set(a).getValue()}, 5), // "5" for separate set-atom; recError else
             new Test('C(A1).set(C(A2)) (no recursion)', function() C('A1').set(C('A2')).getValue(), 5),
             new Test('C(A2).setCell(C(A2)) (recursion)', function() { C('A2').setCell(C('A2')); return C('A2').getValue(); }, recError),
-            new Test('var a= C(A2); a.setCell(a) (recursion)', function() { var a= C('A2'); a.setCell(a); return a.getValue(); }, recError), // "5" for separate set-atom
-            new Test('var a= C(A2); a.setCell(a.set(7)) (recursion)', function() { var a= C('A2'); a.setCell(a.set(7)); return a.getValue(); }, recError), // "7" for separate set-atom
-            new Test('var a= C(A2).set(5); var b= a.add(7); [a,b]', function() { var a= C('A2').set(5); var b=a.add(7); return [ a.getValue(), b.getValue() ]}, [ 12, 12 ], _compareArray), // [5,12] for separate set-atom
+            new Test('var a= C(A2); a.setCell(a) (recursion)', function() { var a= C('A2'); a.setCell(a); return a.getValue(); }, recError), // "5" for separate set-atom; recError else
+            new Test('var a= C(A2); a.setCell(a.set(7)) (recursion)', function() { var a= C('A2'); a.setCell(a.set(7)); return a.getValue(); }, 7), // "7" for separate set-atom; recError else
+            new Test('var a= C(A2).set(5); var b= a.add(7); [a,b]', function() { var a= C('A2').set(5); var b=a.add(7); return [ a.getValue(), b.getValue() ]}, [ 5, 12 ], _compareArray), // [5,12] for separate set-atom; [12,12] else
             // restore cell values
             function() { C('A1').setCell(5); C('A2').setCell(C('A1'))},
             new Test('C(A1).setCell(C(A2)) (recursion)', function() { C('A1').setCell(C('A2')); return C('A2').getValue(); }, recError),
@@ -405,14 +405,48 @@
         ])
     })()
 
+    var test_lookup= (function() {
+
+        return new TestGroup('lookup', [
+            function() {
+                C('A1').setCell('Name')
+                 C('B1').setCell('Vorname')
+                  C('C1').setCell('Alter')
+                   C('D1').setCell('Gewicht')
+                C('A2').setCell('zuppi')
+                 C('B2').setCell('zappi')
+                  C('C2').setCell('78')
+                   C('D2').setCell('85')
+                C('A2').setCell('huhu')
+                 C('B2').setCell('steppi')
+                  C('C2').setCell('7')
+                   C('D2').setCell('97')
+            },
+
+            new Test(
+                'Lookup weight of "huhu"',
+                function() {
+                    var title= C('A1', 'G1')
+                    var name= title.grep('Name')
+                    var weight= title.grep('Gewicht')
+                    var rel_name_weight= weight.relTo(name)
+                    return name.expandRanges(0,0,0,4).ofs(0,1).getValues()
+                    return name.expandRanges(0,0,0,100).ofs(0,1).grep('huhu').addRel(rel_name_weight).getValue()
+                },
+                97
+            ),
+        ])
+    })()
+
     if (_showTimer) console.profile('all tests')
 
     var statistic= new TestGroup('Tests', [
         test_SetGet,
-        test_ranges,
-        test_cellops,
-        test_formel,
-        test_sverweis,
+//        test_ranges,
+//        test_cellops,
+//        test_formel,
+//        test_sverweis,
+        test_lookup,
     ]).run()
 
     if (_showTimer) console.profileEnd('all tests')

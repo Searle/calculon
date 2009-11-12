@@ -537,6 +537,30 @@ if ( __debugDirty ) console.debug("_Atom.dirty: add", this._atomId, rangesToStri
 
 
 // =============================================================================
+//      ExpandRanges extends _Atom, adds given ranges to parent's ranges
+// =============================================================================
+
+    var _ExpandRanges= function( parent, expRange ) {
+        _Atom.call(this, parent)
+
+        this.getRanges= function() {
+            var ranges= parent.getRanges()
+            for ( let i in ranges ) {
+                ranges[i][0]-= expRange[0]
+                if ( ranges[i][0] < 0 ) ranges[i][0]= 0
+                ranges[i][1]-= expRange[1]
+                if ( ranges[i][1] < 0 ) ranges[i][1]= 0
+                ranges[i][2]+= expRange[2]
+                ranges[i][3]+= expRange[3]
+            }
+            return ranges
+        }
+    }
+
+    _Atom.extend('expandRanges', _ExpandRanges, function(expRange) new _ExpandRanges(this, expRange))
+
+
+// =============================================================================
 //      Range extends _Atom, sets atom's range
 // =============================================================================
 
@@ -572,22 +596,22 @@ if ( __debugDirty ) console.debug("_Atom.dirty: add", this._atomId, rangesToStri
 //      Crop extends _Atom
 // =============================================================================
 
-    var _Crop= function( parent, x0, y0, x1, y1 ) {
+    var _Crop= function( parent, cropRange ) {
         _Atom.call(this, parent)
 
         // TODO: pruefen auf x0/y0 < 0 ? Oder macht flatten das?
 
-        if ( x1 === undefined ) x1= x0
-        if ( y1 === undefined ) y1= y0
+        if ( cropRange[2] === undefined ) cropRange[2]= cropRange[0]
+        if ( cropRange[3] === undefined ) cropRange[3]= cropRange[1]
 
         this.getRanges= function() {
             var ranges= []
             for each ( let [ ox0, oy0, ox1, oy1 ] in parent.getRanges() ) {
                 var newRange= [ ox0, oy0, ox1, oy1 ]= [
-                    ox0 + x0,
-                    oy0 + y0,
-                    (ox0 + x1 <= ox1 ? ox0 + x1 : ox1),
-                    (oy0 + y1 <= oy1 ? oy0 + y1 : oy1)
+                    ox0 + cropRange[0],
+                    oy0 + cropRange[1],
+                    (ox0 + cropRange[2] <= ox1 ? ox0 + cropRange[2] : ox1),
+                    (oy0 + cropRange[3] <= oy1 ? oy0 + cropRange[3] : oy1)
                 ]
                 if ( ox0 > ox1 || oy0 > oy1 ) continue
                 ranges.push(newRange)

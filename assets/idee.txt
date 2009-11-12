@@ -172,6 +172,51 @@ Value
 
 
 
+
+problem: B1= sum(B2:B9); C1= sum(C2:C9)...
+
+fuer eine Zeile:
+C('B1').assign(C('B2', 'B9').sum())
+
+funktionale loesung:
+C('B1', 'E1').assign(function() C(this.ofs(0,1), this.ofs(0,9)).sum())
+
+moegliche syntax
+[ 2, 1 : 5, 1 ] = sum([ this, 2 : this, 10 ])
+[ 2, 1 : 5, 1 ] = sum([ _, 2 : _, 10 ])
+// "this"/"_" bedeutet "sinnvoller wert" - sonst z.b. explizit this.x oder this.y
+moeglich auch (anderes problem)
+...sum([ this.y+2 , 2 : this.y+2 , 10 ])
+...sum([ _.y+2 , 2 : _.y+2 , 10 ])
+
+alternativ zu "this": "cell", "range", "sheet"
+
+
+C('B1', 'E1').assign(C('B2', 'E2').add(C('B3', 'E3')).add(C('B4', 'E4')))
+
+
+problem: A1:B2= A11:B12 + A21:B22
+
+moeglich syntax
+[ 1, 1 : 2, 2 ]= [ this.x, this.y+10 ] + [ this.x, this.y+20 ]  => C(A1:B2).assign(function() this.ofs(0,10).add(this.ofs(0,20)))
+[ 1, 1 : 2, 2 ]= [ _, _+10 ] + [ _, _+20 ]
+
+
+Problem:
+Name | Vorname | Alter | Gewicht
+hu   | ha      | 76    | 80kg
+
+finde gewicht von "hu"
+
+var name= root.grep('Name')
+var gewicht= root.grep('Gewicht')
+var rel_name_gewicht= gewicht.relTo(name)
+name.expandRange(0, 0, 0, 100).grep('hu').addRel(rel_name).getValue()
+
+
+
+
+
 ------------------------------------------------------------------------------
 
 Probleme:
