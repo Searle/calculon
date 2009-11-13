@@ -149,7 +149,7 @@ jQuery(function($) {
             html.addItem(htmlTests)
             classes.shift()
             classes.unshift('testgroup-result')
-            var text= [ stats.run + ' of ' + stats.count + ' tests run.' ]
+            var text= [ stats.run + ' of ' + stats.count + ' tests run in <span class="time">' + stats.time + 'ms</span>.' ]
             if ( stats.success > 0 ) {
                 if ( stats.failed === 0 ) {
                     text.push('All succeeded.')
@@ -170,6 +170,7 @@ jQuery(function($) {
             var stats= {
                 count: 0,
                 run: 0,
+                time: 0,
                 success: 0,
                 failed: 0,
             }
@@ -182,6 +183,7 @@ jQuery(function($) {
                 if ( !(test instanceof Test) ) continue
                 stats.count++
                 if ( test.wasRun() ) {
+                    stats.time+= test.time()
                     stats.run++
                     if ( test.success() ) {
                         stats.success++
@@ -236,6 +238,7 @@ jQuery(function($) {
 
         this.success= function() result.success
         this.wasRun= function() result.run
+        this.time= function() result.time
 
         var _toString= function(value) {
             if ( value === undefined ) return 'undefined'
@@ -265,7 +268,7 @@ jQuery(function($) {
             htmlTitle.addItem(htmlResult)
             htmlTitle.add('<span class="test-title">', '</span>').add(title)
             if ( result.run ) {
-                htmlTitle.add('<span class="test-time">', '</span>').add(result.time + 'ms')
+                htmlTitle.add('<span class="time">', '</span>').add(result.time + 'ms')
                 if ( !result.success ) {
                     var htmlResult= html.addTable()
                     htmlResult.addRow([ 'Got:', _toString(result.value) ], {td: ['result-text', 'got']})
