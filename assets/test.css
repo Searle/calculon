@@ -1,0 +1,61 @@
+div.body {
+    padding: 1em;
+}
+ol {
+    margin: 0;
+}
+ol.hidden {
+    display: none;
+}
+.testgroup-title {
+    font-weight: bold;
+}
+.testgroup-title:hover {
+    text-decoration: underline;
+    cursor: pointer;
+}
+.test-title {
+    font-family: monospace;
+    margin-left: 1em;
+}
+.time {
+    font-weight: bold;
+}
+.test .time {
+    margin-left: 1em;
+}
+
+td.result-text {
+    text-align: right;
+}
+td.got, td.expected, td.error {
+    font-family: monospace;
+}
+td.result-text, td.got, td.expected, td.error {
+    font-size: 80%;
+}
+td.error {
+    font-weight: bold;
+}
+
+
+.success {
+    background-color: #DDffff;
+}
+.failed {
+    background-color: #FFCCCC;
+}
+.result {
+    text-transform: uppercase;
+    font-weight: bold;
+}
+.success .result {
+    color: green;
+}
+.failed .result {
+    color: red;
+}
+
+/* ============================================================================
+//      EOF
+// ============================================================================ */
