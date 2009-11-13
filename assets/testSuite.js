@@ -599,17 +599,18 @@ jQuery(function($) {
         ])
     })()
 
-    if (_showTimer) console.profile('all tests')
-
-    new TestGroup('Tests', [
+    var allTests= new TestGroup('Tests', [
         test_SetGet,
         test_ranges,
         test_cellops,
         test_formel,
         test_sverweis,
         test_lookup,
-    ]).run().html().render($('div.body'))
+    ])
 
+    if (_showTimer) console.profile('all tests')
+    allTests.run()
     if (_showTimer) console.profileEnd('all tests')
 
+    allTests.html().render($('div.body'))
 })
