@@ -223,22 +223,29 @@ jQuery(function($) {
             run: false,
             value: undefined,
             success: undefined,
+            error: undefined,
         }
 
         this.run= function(prefix) {
             if ( !this.enabled ) return
 
-            var start= new Date().getTime()
-            result.value= fn();
-            result.time= new Date().getTime() - start
-
             result.run= true
-            result.success= !!compare(result.value, expected)
+            try {
+                var start= new Date().getTime()
+                result.value= fn();
+                result.time= new Date().getTime() - start
+
+                result.success= !!compare(result.value, expected)
+            }
+            catch(e) {
+                result.success= false
+                result.error= e
+            }
         }
 
-        this.success= function() result.success
-        this.wasRun= function() result.run
-        this.time= function() result.time
+        this.success= function() !!result.success
+        this.wasRun= function() !!result.run
+        this.time= function() result.time || 0
 
         var _toString= function(value) {
             if ( value === undefined ) return 'undefined'
@@ -268,11 +275,12 @@ jQuery(function($) {
             htmlTitle.addItem(htmlResult)
             htmlTitle.add('<span class="test-title">', '</span>').add(title)
             if ( result.run ) {
-                htmlTitle.add('<span class="time">', '</span>').add(result.time + 'ms')
+                if ( result.time !== undefined ) htmlTitle.add('<span class="time">', '</span>').add(result.time + 'ms')
                 if ( !result.success ) {
                     var htmlResult= html.addTable()
                     htmlResult.addRow([ 'Got:', _toString(result.value) ], {td: ['result-text', 'got']})
                     htmlResult.addRow([ 'Expected:', _toString(expected) ], {td: ['result-text', 'expected']})
+                    if (result.error) htmlResult.addRow([ 'Error:', _toString(result.error) ], {td: ['result-text', 'error']})
                 }
             }
             return html
