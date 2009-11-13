@@ -1,4 +1,9 @@
-(function() {
+jQuery(function($) {
+
+    $('.testgroup-title').live('click', function() {
+        var $ol= $($(this).parent().find('ol')[0])
+        $ol.toggleClass('hidden')
+    })
 
     var _params= {}
     document.location.search.substr(1).split('&').forEach(function(option) {
@@ -22,8 +27,12 @@
         }
     }
 
+    var _isFunction= function(obj) Object.prototype.toString.call(obj) === '[object Function]'
+    var _isArray=    function(obj) Object.prototype.toString.call(obj) === '[object Array]'
+
     var _compareArray= function(a, b) {
-        if (a.length !== b.length) return false
+        if ( !_isArray(a) || !_isArray(b) ) return false
+        if ( a.length !== b.length ) return false
         for (var i in a) {
             if ( a[i] instanceof Error && b[i] instanceof Error ) {
                 if (a.message !== b.message && b.message !== '') return false
@@ -34,58 +43,171 @@
     }
 
     // we should usually compare sorted arrays, because range's getValue()'s order is not determined
-    var _compareSortedArray= function(a, b) _compareArray(a.slice().sort(), b.slice().sort())
+    var _compareSortedArray= function(a, b) {
+        if ( !_isArray(a) || !_isArray(b) ) return false
+        return _compareArray(a.slice().sort(), b.slice().sort())
+    }
 
 //    var _cmpNum= function(a, b) a < b ? -1 : a === b ? 0 : 1
 
+// ============================================================================
+//      Html Builder Class
+// ============================================================================
+
+    var Html= function(pre, post) {
+        var items= [];
+
+        this.addItem= function(item) {
+            items.push(item);
+            return item;
+        };
+
+        this.add= function(pre, post) this.addItem(new Html(pre, post));
+
+        this.addItems= function(add_items) {
+            items.concat(add_items);
+        };
+
+        var rownum= 0;
+        var rowclasses= [ 'row1', 'row2' ];
+
+        this.addTable= function(classes) {
+            rownum= 0;
+            var class= '';
+            if (classes) {
+                class= ' class="' + classes.join(' ') + '"';
+            }
+            return this.add('<table' + class + '>', '</table>');
+        };
+
+        this.addRow= function(row, class_data) {
+            if (!class_data) class_data= [];
+            var row_class= [ rowclasses[ rownum++ % rowclasses.length ] ];
+            if (class_data.tr) row_class.push(class_data.tr);
+            var tr= this.add('<tr class="' + row_class.join(' ') + '">', '</tr>');
+            var td_classes= class_data.td || [];
+            row.forEach(function(r, i) tr.add('<td class="' + (td_classes[i] || '') + '">', '</td>').add(r));
+            return row;
+        };
+
+        this._render= function() {
+            var result= [ item._render() for each (item in items) ]
+            if (pre)  result.unshift(pre);
+            if (post) result.push(post);
+            return result.join('');
+        };
+
+        this.render= function($el) {
+            var html= this._render();
+            if ($el) $el.html(html);
+            return html;
+        };
+
+        return this;
+    };
+
+
     var TestGroup= function(title, tests) {
-        this.enable= true
+        this.enabled= true
 
-        this.run= function(prefix) {
-            var testcount= 0
-            var failed= 0
-            var success= 0
-
-            // FIXME: shoud be "console.groupCollapsed()" but it's buggy
-            console.group('Testing block "%s"', title)
-            var num= 0
+        this.run= function() {
+            if ( !this.enabled ) return
             for each (let test in tests) {
                 if (test instanceof Test) {
-                    testcount++
-                    if (test.run(++num)) {
-                        success++
-                    }
-                    else {
-                        failed++
-                    }
+                    test.run()
                     continue
                 }
                 if (test instanceof TestGroup) {
-                    var result= test.run()
-                    testcount+= result.tests
-                    success+=   result.success
-                    failed+=    result.failed
+                    test.run()
                     continue
                 }
-                if (Object.prototype.toString.call(test) === '[object Function]') {
+                if ( _isFunction(test) ) {
                     test()
                     continue
                 }
             }
-            console.groupEnd()
-            var statusFn= failed ? console.warn : console.info
-            statusFn('Finished %i tests in block "%s": Success %i; Failed: %i', testcount, title, success, failed)
-            return {
-                tests: testcount,
-                success: success,
-                failed: failed,
+            return this
+        }
+
+        this.html= function() {
+            if ( !this.enabled ) {
+                return new Html('<div class="testgroup disabled">', '</div>').add('"' + title + '" is disabled')
             }
+
+            var htmlTests= new Html('<ol class="hidden">', '</ol>')
+            for each (let test in tests) {
+                if ( test instanceof TestGroup ) {
+                    htmlTests.add('<li>', '</li>').addItem(test.html())
+                }
+                if ( test instanceof Test ) {
+                    htmlTests.addItem(test.html())
+                }
+            }
+
+            var html= new Html('<div class="testgroup">', '</div>')
+            var classes= [ 'testgroup-title' ]
+            var stats= this.stats()
+            if ( stats.success > 0 && stats.failed === 0 ) {
+                classes.push('success')
+            }
+            else if ( stats.failed > 0 ) {
+                classes.push('failed')
+            }
+            html.add('<div class="' + classes.join(' ') + '">', '</div>').add(title)
+            html.addItem(htmlTests)
+            classes.shift()
+            classes.unshift('testgroup-result')
+            var text= [ stats.run + ' of ' + stats.count + ' tests run.' ]
+            if ( stats.success > 0 ) {
+                if ( stats.failed === 0 ) {
+                    text.push('All succeeded.')
+                }
+                else {
+                    text.push(stats.success + ' tests passed (' + (Math.floor(stats.success / stats.run * 1000) / 10) + '%)')
+                    text.push(stats.failed + ' tests failed (' + (Math.floor(stats.failed / stats.run * 1000) / 10) + '%)')
+                }
+            }
+            else {
+                if ( stats.run > 0 ) text.push('All failed')
+            }
+            html.add('<div class="' + classes.join(' ') + '">', '</div>').add(text.join(' '))
+            return html
+        }
+
+        this.stats= function() {
+            var stats= {
+                count: 0,
+                run: 0,
+                success: 0,
+                failed: 0,
+            }
+            for each (let test in tests) {
+                if ( test instanceof TestGroup ) {
+                    var _stats= test.stats()
+                    for (let stat in stats) stats[stat]+= _stats[stat]
+                    continue
+                }
+                if ( !(test instanceof Test) ) continue
+                stats.count++
+                if ( test.wasRun() ) {
+                    stats.run++
+                    if ( test.success() ) {
+                        stats.success++
+                    }
+                    else {
+                        stats.failed++
+                    }
+                }
+            }
+            return stats
         }
     }
 
     var Test= function(title, fn, expected, compare) {
+        this.enabled= true
+
         if ( typeof compare === 'undefined' ) {
-            if (Object.prototype.toString.call(expected) === '[object Array]') {
+            if ( _isArray(expected) ) {
                 compare= _compareSortedArray
             }
             else {
@@ -103,25 +225,54 @@
             eval('fn=function() ' + fn);
         }
 
+        var result= {
+            run: false,
+            value: undefined,
+            success: undefined,
+        }
+
         this.run= function(prefix) {
-            // do not show error messages
-            var fnError= console.Error
-            console.Error= function() {}
+            if ( !this.enabled ) return
 
             _timerStart('test time "' + title +'"')
-            var result= fn();
+            result.value= fn();
             _timerEnd('test time "' + title +'"')
 
-            // restore error handling
-            console.Error= fnError
+            result.run= true
+            result.success= !!compare(result.value, expected)
+        }
 
-            if (compare(result, expected)) {
-                console.log('%s Success: ' + title, prefix);
-                return true
+        this.success= function() result.success
+        this.wasRun= function() result.run
+
+        this.html= function() {
+            if ( !this.enabled ) {
+                return new Html('<li class="test disabled">', '</li>').add('Test "' + title + '" is disabled')
             }
-            console.log('%s Failed: ' + title, prefix);
-            console.log('Got: ', result, 'Expected: ', expected)
-            return false
+            if ( !result.run ) {
+                return new Html('<li class="test not-run">', '</li>').add('Test "' + title + '" was not run')
+            }
+
+            var classes= [ 'test' ]
+            var htmlResult= new Html('<span class="result">', '</span>')
+            if ( result.success ) {
+                classes.push('success')
+                htmlResult.add('passed')
+            }
+            else {
+                classes.push('failed')
+                htmlResult.add('failed')
+            }
+            var html= new Html('<li class="' + classes.join(' ') + '">', '</li>')
+            var htmlTitle= html.add('<div class="test">', '</div>')
+            htmlTitle.addItem(htmlResult)
+            htmlTitle.add('<span class="test-title">', '</span>').add(title)
+            if ( !result.success ) {
+                var htmlResult= html.addTable()
+                htmlResult.addRow([ 'Got:', typeof result.value === 'object' ? result.value.toSource() : result.value.toString() ], {td: ['result-text', 'got']})
+                htmlResult.addRow([ 'Expected:', typeof expected ? expected.toSource() : expected.toString() ], {td: ['result-text', 'expected']})
+            }
+            return html
         }
     }
 
@@ -266,13 +417,13 @@
         ),
         // add an overlapping range - setting the added range should have no effect
         new Test(
-            '(set() should have no effect)',
+            'set() should have no effect',
             "C('B1', 'D3').addRange(C('C2', 'E4').set(0)).getValues()",
             ['B1', 'B2', 'B3', 'C1', 'C2', 'C3', 'C4', 'D1', 'D2', 'D3', 'D4', 'E2', 'E3', 'E4']
         ),
         // add an overlapping range - setting cells in added range should change resulting values
         new Test(
-            '(setCell() should have an effect)',
+            'setCell() should have an effect',
             "{ C('C2', 'E4').setCell(0); return C('B1', 'D3').addRange(C('C2', 'E4')).getValues(); }",
             [ 'B1', 'B2', 'B3', 'C1', 0, 0, 0, 'D1', 0, 0, 0, 0, 0, 0 ]
         ),
@@ -447,24 +598,15 @@
 
     if (_showTimer) console.profile('all tests')
 
-    var statistic= new TestGroup('Tests', [
+    new TestGroup('Tests', [
         test_SetGet,
         test_ranges,
         test_cellops,
         test_formel,
         test_sverweis,
         test_lookup,
-    ]).run()
+    ]).run().html().render($('div.body'))
 
     if (_showTimer) console.profileEnd('all tests')
 
-
-    document.write(
-        '<table>'
-        + '<tr><td>Tests run:</td><td>' + statistic.tests + '</td></tr>'
-        + '<tr><td>Success:</td><td>' + statistic.success + ' (' + (Math.floor(statistic.success / statistic.tests * 1000)/10) + '%)</td></tr>'
-        + '<tr><td>Failed:</td><td>' + statistic.failed + ' (' + (Math.floor(statistic.failed / statistic.tests * 1000)/10) + '%)</td></tr>'
-        + '</table>'
-        + '<a href="' + document.location.pathname + (_showTimer ? '' : '?profiler') + '">Profiler ' + (_showTimer ? 'off' : 'on') + '</a>'
-    )
-})()
+})
