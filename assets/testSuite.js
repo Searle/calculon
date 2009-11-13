@@ -13,14 +13,6 @@ jQuery(function($) {
 
     var _showTimer= _params.profiler
 
-    var _timerStart= function() {}
-    var _timerEnd= function() {}
-
-    if (_showTimer) {
-        _timerStart= console.time
-        _timerEnd= console.timeEnd
-    }
-
     var _range= function (begin, end) {
         for (let i = begin; i < end; ++i) {
             yield i
@@ -234,9 +226,9 @@ jQuery(function($) {
         this.run= function(prefix) {
             if ( !this.enabled ) return
 
-            _timerStart('test time "' + title +'"')
+            var start= new Date().getTime()
             result.value= fn();
-            _timerEnd('test time "' + title +'"')
+            result.time= new Date().getTime() - start
 
             result.run= true
             result.success= !!compare(result.value, expected)
@@ -245,17 +237,22 @@ jQuery(function($) {
         this.success= function() result.success
         this.wasRun= function() result.run
 
+        var _toString= function(value) {
+            if ( value === undefined ) return 'undefined'
+            if ( typeof value === 'string' ) return '"' + value + '"'
+            if ( typeof value === 'object' ) return value.toSource()
+            return value.toString()
+        }
+
         this.html= function() {
-            if ( !this.enabled ) {
-                return new Html('<li class="test disabled">', '</li>').add('Test "' + title + '" is disabled')
-            }
-            if ( !result.run ) {
-                return new Html('<li class="test not-run">', '</li>').add('Test "' + title + '" was not run')
-            }
 
             var classes= [ 'test' ]
             var htmlResult= new Html('<span class="result">', '</span>')
-            if ( result.success ) {
+            if ( !result.run ) {
+                classes.push('skipped')
+                htmlResult.add('skipped')
+            }
+            else if ( result.success ) {
                 classes.push('success')
                 htmlResult.add('passed')
             }
@@ -267,10 +264,13 @@ jQuery(function($) {
             var htmlTitle= html.add('<div class="test">', '</div>')
             htmlTitle.addItem(htmlResult)
             htmlTitle.add('<span class="test-title">', '</span>').add(title)
-            if ( !result.success ) {
-                var htmlResult= html.addTable()
-                htmlResult.addRow([ 'Got:', typeof result.value === 'object' ? result.value.toSource() : result.value.toString() ], {td: ['result-text', 'got']})
-                htmlResult.addRow([ 'Expected:', typeof expected ? expected.toSource() : expected.toString() ], {td: ['result-text', 'expected']})
+            if ( result.run ) {
+                htmlTitle.add('<span class="test-time">', '</span>').add(result.time + 'ms')
+                if ( !result.success ) {
+                    var htmlResult= html.addTable()
+                    htmlResult.addRow([ 'Got:', _toString(result.value) ], {td: ['result-text', 'got']})
+                    htmlResult.addRow([ 'Expected:', _toString(expected) ], {td: ['result-text', 'expected']})
+                }
             }
             return html
         }
