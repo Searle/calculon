@@ -3,6 +3,9 @@ var PARSER= (function() {
 
     let undefined
 
+    // this object contains all grammar elements for late expansion
+    let _= {}
+
     let _isFunction= function( obj ) {
         return Object.prototype.toString.call(obj) === "[object Function]"
     }
@@ -19,64 +22,71 @@ var PARSER= (function() {
     }
 
     // generates a dynamic constructor, inherited from class given as first argument
-    let _dynamicConstructor= function _dynamicConstructor() {
-        let args= Array.prototype.slice.call(arguments)
-        let fnPrototype= args.shift()
+    let _dynamicConstructor= function _dynamicConstructor(fnPrototype, arg, name) {
         var fnClass= function _dynamicClass() {
-            fnClass.prototype.__super__.apply(this, args)
+            fnClass.prototype.__super__.call(this, arg)
         }
-        fnClass.name= fnPrototype.name
+        fnClass.name= name || ('_dynamic_' + fnPrototype.name)
         _extend(fnPrototype, fnClass)
         return fnClass
     }
 
-    let GE_Error= function GE_Error() {
-        GE_Error.prototype.__super__.apply(this, arguments)
+    let Grammar_Error= function Grammar_Error() {
+        Grammar_Error.prototype.__super__.apply(this, arguments)
     }
-    _extend(Error, GE_Error)
+    _extend(Error, Grammar_Error)
 
     /**
     *
-    *   GE is the base class of all grammar elements
+    *   ElementBase is the base class of all grammar elements
     *
     **/
 
-    let GE= function GE() {
+    let ElementBase= function ElementBase() {
 //console.debug('new:', this.constructor.name)
         this.fullText= undefined
         this.match= undefined
         this.data= undefined
         this.name= this.constructor.name
     }
-    let __path= ""
-    GE.prototype.parse= function(_in) {
-let oldPath= __path
-__path+= '>' + this.name
-//console.debug('enter parse ', __path)
 
+// var __path=""
+    ElementBase.prototype.parse= function(_in) {
+// let oldPath= __path
+// __path+= ">" + this.constructor.name
+// console.log("enter " + __path, this)
         let trimmed= _in.trimLeft()
         let result= this._parse(trimmed, _in)
         if (result === undefined) {
-//console.debug('parse ' + __path + ': text: "' + _in + '", failed')
-__path= oldPath
+// console.log("failed " + __path, _in)
+// __path= oldPath
             return // undefined
         }
 
         this.fullText= _in
         if (this.match === undefined)  this.match=    result
         if (this.remain === undefined) this.remain=   trimmed.substr(result.length)
-//console.debug('parse ' + __path + ': text: "' + this.fullText + '", match: "' + this.match + '", remain: "' + this.remain + '"')
-__path= oldPath
+// console.warn("match " + __path, this, _in)
+// __path= oldPath
         return this
     }
-    GE.prototype._parse= function() { throw new GE_Error("This method should have been overwritten.") }
-    GE.prototype.process= function() true
-    GE.prototype.newInstance= function(proto) {
-        if (typeof proto === 'string') return new GE_Literal(proto)
-//        if (proto instanceof GE) return proto
-        if (_isArray(proto)) return new GE_List(proto)
-        if (_isFunction(proto)) return new proto
-        throw new GE_Error("Don't know what to instanciate.")
+//    ElementBase.prototype._parse= function() { throw new Grammar_Error("This method should have been overwritten.") }
+    ElementBase.prototype._parse= function() { throw ("This method should have been overwritten.") }
+    ElementBase.prototype.process= function() { console.log(this); console.error('Error'); throw ("This method should have been overwritten.") }
+    ElementBase.prototype.newInstance= function(arg) {
+        if (_isArray(arg)) return new _List(arg)
+        if (_isFunction(arg)) return new arg
+        if (typeof arg === 'string') {
+            let match= arg.match(/^"(.*)"$/)
+            if (match) {
+                return new _.Literal(match[1])
+            }
+            else if (_[arg]) return new (_[arg])
+        }
+//        throw new Grammar_Error("Don't know what to instanciate.")
+        console.log(arg)
+        console.trace()
+        throw ("Don't know what to instanciate.")
     }
 
 
@@ -87,31 +97,33 @@ __path= oldPath
     **/
 
     // defines a list of alternative grammar elements
-    let GE_ListOr= function GE_ListOr(fnElements) {
-        GE_ListOr.prototype.__super__.call(this)
+    let _ListOr= function ListOr(Elements) {
+        _ListOr.prototype.__super__.call(this)
 
         this._parse= function(trimmed, _in) {
-            for each (let fnElement in fnElements) {
-                let element= this.newInstance(fnElement)
+            for each (let Element in Elements) {
+                let element= this.newInstance(Element)
                 if (element.parse(_in) === undefined) continue
                 this.data= element
                 return element.match
             }
         }
     }
-    GE_ListOr.prototype.process= function() this.data.process()
-    _extend(GE, GE_ListOr)
+    _ListOr.prototype.process= function() this.data.process()
+    _extend(ElementBase, _ListOr)
+
+    let Or= function(elements, name) _dynamicConstructor(_ListOr, elements, name || '_anonymous_Or')
 
     // defines a list of mandatory grammar elements
-    let GE_List= function GE_List(fnElements) {
-        GE_List.prototype.__super__.call(this)
+    let _List= function List(Elements) {
+        _List.prototype.__super__.call(this)
 
         this._parse= function(trimmed, _in) {
             let elements= []
             let fullMatch= ""
             let remain= _in
-            for each (let fnElement in fnElements) {
-                let element= this.newInstance(fnElement)
+            for each (let Element in Elements) {
+                let element= this.newInstance(Element)
                 if (element.parse(remain) === undefined) return // undefined
                 elements.push(element)
 //console.log(this.constructor.name, '_parse', element.match)
@@ -123,22 +135,25 @@ __path= oldPath
             return fullMatch
         }
     }
-    GE_List.prototype.process= function() { throw new GE_Error("List's processor should be overwritten") }
-    _extend(GE, GE_List)
+    _extend(ElementBase, _List)
+
+    let List= function(elements, name) _dynamicConstructor(_List, elements, name || '_anonymous_List')
 
     // defines an optional grammar element
-    let GE_Optional= function GE_Optional(fnElement) {
-        GE_Optional.prototype.__super__.call(this)
+    let _Optional= function Optional(Element) {
+        _Optional.prototype.__super__.call(this)
 
         this._parse= function(trimmed, _in) {
-            let element= this.newInstance(fnElement)
+            let element= this.newInstance(Element)
             if (element.parse(_in) === undefined) return ''
             this.remain= element.remain
-            this.data= element.data
+            this.data= element
             return element.match
         }
     }
-    _extend(GE, GE_Optional)
+    _extend(ElementBase, _Optional)
+
+    let Optional= function(element) _dynamicConstructor(_Optional, element, name || '_anonymous_Optional')
 
     /**
     *
@@ -147,78 +162,47 @@ __path= oldPath
     **/
 
     // defines a literal like "="
-    let GE_Literal= function GE_Literal(literal) {
-        GE_Literal.prototype.__super__.call(this)
+    _.Literal= function Literal(literal) {
+        _.Literal.prototype.__super__.call(this)
         this._parse= function(_in) {
             if (_in.indexOf(literal) === 0) return literal
         }
+        this.process= function() this.match ? literal : undefined
     }
-    _extend(GE, GE_Literal)
+    _extend(ElementBase, _.Literal)
 
     // defines an identifier (letiable name, function name etc.)
-    let GE_Identifier= function GE_Identifier() GE_Identifier.prototype.__super__.call(this)
-    GE_Identifier.prototype._parse= function(_in) {
+    _.Identifier= function Identifier() _.Identifier.prototype.__super__.call(this)
+    _.Identifier.prototype._parse= function(_in) {
         let match= _in.match(/^[a-z_]\w*/i)
         if (match === null) return // undefined
         return match[0]
     }
-    _extend(GE, GE_Identifier)
+    _extend(ElementBase, _.Identifier)
 
-    // defines a letiable (an identifier preceeded by "$")
-    let GE_Variable= function GE_Variable() {
-        GE_Variable.prototype.__super__.call(this, [
-            '$',
-            GE_Identifier,
-        ])
-    }
-    _extend(GE_List, GE_Variable)
-
-    let GE_Int= function GE_Int() GE_Int.prototype.__super__.call(this)
-    GE_Int.prototype._parse= function(_in) {
+    _.Int= function Int() _.Int.prototype.__super__.call(this)
+    _.Int.prototype._parse= function(_in) {
         let match= _in.match(/^\-?\d+/)
         if (match === null) return // undefined
         this.data= parseInt(match[0], 10)
         return match[0]
     }
-    GE_Int.prototype.process= function() this.data
-    _extend(GE, GE_Int)
+    this.process= function() this.data
+    _extend(ElementBase, _.Int)
 
-    let GE_Float= function GE_Float() GE_Float.prototype.__super__.call(this)
-    GE_Float.prototype._parse= function(_in) {
+    _.Float= function Float() _.Float.prototype.__super__.call(this)
+    _.Float.prototype._parse= function(_in) {
         let match= _in.match(/^\-?(\d+?\.)?\d+(e[\+\-]?\d+)?/i)
         if (match === null) return // undefined
         this.data= parseFloat(match[0])
         return match[0]
     }
-    GE_Float.prototype.process= function() this.data
-    _extend(GE, GE_Float)
-
-/*
-    // the formal way to define a sting
-    let GE_CharacterExcept= function GE_CharacterExcept(except) {
-        GE_CharacterExcept.prototype.__super__.call(this)
-        this._parse= function(trimmed, _in) {
-            let match= _in.match(/^\\?(.)/)
-            if (match === null || match[0] === except) return // undefined
-            this.remain= _in.substr(match[0].length)
-            this.data= match[1]
-            return match[0]
-        }
-    }
-    _extend(GE, GE_CharacterExcept)
-
-    let GE_CharacterListExcept= function GE_CharacterListExcept(except) {
-        GE_CharacterListExcept.prototype.__super__.call(this, [
-            _dynamicConstructor(GE_CharacterExcept, except),
-            _dynamicConstructor(GE_Optional, _dynamicConstructor(GE_CharacterListExcept, except)),
-        ])
-    }
-    _extend(GE_List, GE_CharacterListExcept)
-*/
+    _.Float.prototype.process= function() this.data
+    _extend(ElementBase, _.Float)
 
     // the pragmatic way to define a string
-    let GE_CharacterListExcept= function GE_CharacterListExcept(except) {
-        GE_CharacterListExcept.prototype.__super__.call(this)
+    let _CharacterListExcept= function CharacterListExcept(except) {
+        _CharacterListExcept.prototype.__super__.call(this)
         this._parse= function(trimmed, _in) {
             this.match= ''
             this.remain= _in
@@ -236,87 +220,125 @@ __path= oldPath
             }
         }
     }
-    _extend(GE, GE_CharacterListExcept)
+    _CharacterListExcept.prototype.process= function() this.data
+    _extend(ElementBase, _CharacterListExcept)
+    CharacterListExcept= function(chars) _dynamicConstructor(_CharacterListExcept, chars, 'CharacterListExcept')
 
-    let GE_SingleQuotedString= function GE_SingleQuotedString() {
-        GE_SingleQuotedString.prototype.__super__.call(this, [
-            "'",
-            _dynamicConstructor(GE_CharacterListExcept, "'"),
-            "'",
-        ])
-    }
-    GE_SingleQuotedString.prototype.process= function() this.data[1].data
-    _extend(GE_List, GE_SingleQuotedString)
+    _.SingleQuotedString= List([
+        '"\'"',
+        CharacterListExcept("'"),
+        '"\'"',
+    ])
+    _.SingleQuotedString.prototype.process= function() this.data ? this.data[1].process() : undefined
 
-    let GE_FunctionCall= function GE_FunctionCall() {
-        GE_FunctionCall.prototype.__super__.call(this, [
-            GE_Identifier,
-            GE_ParanthesesStatement,
-        ])
-    }
-    _extend(GE_List, GE_FunctionCall)
+    _.DoubleQuotedString= List([
+        '"""',
+        CharacterListExcept('"'),
+        '"""',
+    ])
+    _.SingleQuotedString.prototype.process= function() this.data ? this.data[1].process() : undefined
 
-    let GE_ParanthesesStatement= function GE_ParanthesesStatement() {
-        GE_ParanthesesStatement.prototype.__super__.call(this, [
-            '(',
-            GE_Statement,
-            ')',
-        ])
-    }
-    _extend(GE_List, GE_ParanthesesStatement)
+    _.QuotedString= Or([
+        'SingleQuotedString',
+        'DoubleQuotedString',
+    ])
+    _.QuotedString.prototype.process= function() this.data.process()
 
-    let GE_SingleStatement= function GE_SingleStatement() {
-        GE_SingleStatement.prototype.__super__.call(this, [
-            GE_Variable,
-            GE_Assignment,
-            GE_Float,
-            GE_SingleQuotedString,
-            GE_FunctionCall,
-            GE_ParanthesesStatement,
-        ])
+    // defines a variable (an identifier preceeded by "$")
+    _.Variable= List([
+        '"$"',
+        'Identifier',
+    ])
+    _.Variable.prototype.process= function() {
+        if (this.data === undefined) return // undefined
+        console.log('Would resolve variable "$%s"', this.data[1].match)
+        return this.data[1].match
     }
-    _extend(GE_ListOr, GE_SingleStatement)
 
-    let GE_Statement= function GE_Statement() {
-        GE_Statement.prototype.__super__.call(this, [
-            GE_SingleStatement,
-            _dynamicConstructor(GE_Optional,
-                [
-                    ',',
-                    GE_Statement,
-                ]
-            ),
-        ])
+    _.ParameterList= List([
+        'Expression',
+        Optional([
+            '","',
+            'ParameterList',
+        ]),
+    ])
+    _.ParameterList.prototype.process= function() {
+        if (this.data === undefined) return // undefined
+        let result= [this.data[0].process()]
+        if (this.data[1].data === undefined) return result
+        return result.concat(this.data[1].data.process())
     }
-    GE_Statement.prototype.process= function() {
-        let lastResult= undefined
-        for each (let element in this.data) {
-            /// ...to be continued
-        }
-    }
-    _extend(GE_List, GE_Statement)
 
-    let GE_Assignment= function GE_Assignment() {
-        GE_Assignment.prototype.__super__.call(this, [
-            _dynamicConstructor(GE_Optional, GE_Variable),
-            '=',
-            GE_Statement,
-        ])
+    _.FunctionCall= List([
+        'Identifier',
+        '"("',
+        Optional('ParameterList'),
+        '")"',
+    ])
+    _.FunctionCall.prototype.process= function() {
+        if (this.data === undefined) return // undefined
+        let fnName= this.data[0].match
+        let args= this.data[2] ? this.data[2].data.process() : []
+        console.log('Would execute function "%s(%s)"', fnName, args.toSource())
+        return fnName + '(' + args.toSource() + ')'
     }
-    GE_Assignment.prototype.process= function() {
+
+    _.Expression= Or([
+        'Variable',
+        'Float',
+        'QuotedString',
+        'FunctionCall',
+        'ParanthesesExpression',
+    ])
+
+    _.ParanthesesExpression= List([
+        '"("',
+        'Expression',
+        '")"',
+    ])
+    _.ParanthesesExpression.prototype.process= function() {
+        if (this.data === undefined) return // undefined
+        return this.data[1].process()
+    }
+
+    _.Statement= Or([
+        'Expression',
+        'Assignment',
+    ])
+
+    _.StatementList= List([
+        'Statement',
+        Optional([
+            '";"',
+            Optional('StatementList'),
+        ]),
+    ])
+    _.StatementList.prototype.process= function() {
+        if (this.data === undefined) return // undefined
+        let lastResult= this.data[0].process()
+        if (this.data[1].data === undefined) return lastResult
+        return this.data[1].data[1].process()
+    }
+
+    _.Assignment= List([
+        'Variable',
+        '"="',
+        'Statement',
+    ])
+    _.Assignment.prototype.process= function() {
+        if (this.data === undefined) return // undefined
         let value= this.data[2].process()
         console.log('would assign variable "%s" with value "$s"', this.data[0].process(), value)
         return value
     }
-    _extend(GE_List, GE_Assignment)
 
-    return GE_Statement
+    return _.StatementList
 
 })()
 
 
 var _test= new PARSER()
-var _result= _test.parse("$zuppi = function('huhu')")
+var _result= _test.parse("function('huhu')")
 console.log(_result)
 console.log(_result.process())
 
