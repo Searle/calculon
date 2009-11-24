@@ -104,12 +104,13 @@ var PARSER= (function() {
             for each (let Element in Elements) {
                 let element= this.newInstance(Element)
                 if (element.parse(_in) === undefined) continue
+                this.remain= element.remain
                 this.data= element
                 return element.match
             }
         }
     }
-    _ListOr.prototype.process= function() this.data.process()
+    _ListOr.prototype.process= function() this.data.process.apply(this.data, arguments)
     _extend(ElementBase, _ListOr)
 
     let Or= function(elements, name) _dynamicConstructor(_ListOr, elements, name || '_anonymous_Or')
@@ -126,12 +127,12 @@ var PARSER= (function() {
                 let element= this.newInstance(Element)
                 if (element.parse(remain) === undefined) return // undefined
                 elements.push(element)
-//console.log(this.constructor.name, '_parse', element.match)
                 fullMatch+= element.match
                 remain= element.remain
             }
             this.data= elements
             this.remain= remain
+//console.log('list_parse [', fullMatch, '][', remain, ']', Elements)
             return fullMatch
         }
     }
@@ -244,102 +245,120 @@ var PARSER= (function() {
     ])
     _.QuotedString.prototype.process= function() this.data.process()
 
-    // defines a variable (an identifier preceeded by "$")
-    _.Variable= List([
-        '"$"',
+    // defines magic value's properties (the ".property"-part of "_.property")
+    _.MagicValueProperty= List([
+        '"."',
         'Identifier',
+        Optional('MagicValueProperty'),
     ])
-    _.Variable.prototype.process= function() {
-        if (this.data === undefined) return // undefined
-        console.log('Would resolve variable "$%s"', this.data[1].match)
-        return this.data[1].match
+
+    // defines the magic value "_" and it's properties
+    _.MagicValue= List([
+        '"_"',
+        Optional('MagicValueProperty'),
+    ])
+    _.MagicValue.prototype.process= function(magic) {
+        let property= '.' + magic.property
+        if (this.data[1].data !== undefined) {
+            property= this.data[1].match
+        }
+        return '"' + magic.object + property + '"'
     }
 
-    _.ParameterList= List([
-        'Expression',
-        Optional([
-            '","',
-            'ParameterList',
-        ]),
-    ])
-    _.ParameterList.prototype.process= function() {
-        if (this.data === undefined) return // undefined
-        let result= [this.data[0].process()]
-        if (this.data[1].data === undefined) return result
-        return result.concat(this.data[1].data.process())
-    }
-
-    _.FunctionCall= List([
-        'Identifier',
-        '"("',
-        Optional('ParameterList'),
-        '")"',
-    ])
-    _.FunctionCall.prototype.process= function() {
-        if (this.data === undefined) return // undefined
-        let fnName= this.data[0].match
-        let args= this.data[2] ? this.data[2].data.process() : []
-        console.log('Would execute function "%s(%s)"', fnName, args.toSource())
-        return fnName + '(' + args.toSource() + ')'
-    }
-
-    _.Expression= Or([
-        'ParanthesesExpression',
+    _.ExpressionPart= Or([
         'Float',
         'Int',
-        'QuotedString',
-        'FunctionCall',
-        'Variable',
+        'MagicValue',
     ])
+
+    _.BiOperator= Or([ '"+"', '"-"', '"/"', '"*"', ])
+
+    _.UniOperator= Or([ '"+"', '"-"', '"!"', '"~"', ])
+
+    _.SimpleExpression= List([
+        Optional('UniOperator'),
+        'ExpressionPart',
+        Optional([
+            'BiOperator',
+            'Expression',
+        ])
+    ])
+    _.SimpleExpression.prototype.process= function(magic) {
+        var expression= ""
+        if (this.data[0].data) expression+= this.data[0].data.match
+        expression+= this.data[1].process(magic)
+        if (this.data[2].data) {
+            expression+= this.data[2].data.data[0].match + this.data[2].data.data[1].process(magic)
+        }
+        return expression
+    }
 
     _.ParanthesesExpression= List([
         '"("',
         'Expression',
         '")"',
     ])
-    _.ParanthesesExpression.prototype.process= function() {
-        if (this.data === undefined) return // undefined
-        return this.data[1].process()
+    _.ParanthesesExpression.prototype.process= function(magic) {
+        return '(' + this.data[1].process(magic) + ')'
     }
 
-    _.Statement= Or([
-        'Assignment',
+    _.Expression= Or([
+        'SimpleExpression',
+        'ParanthesesExpression',
+    ])
+    _.Expression.prototype.process= function(magic) {
+        return this.data.process(magic)
+    }
+
+    _.ExpressionValue= List([
         'Expression',
     ])
+    _.ExpressionValue.prototype.process= function(magic) eval(this.data[0].process(magic))
 
-    _.StatementList= List([
-        'Statement',
+    _.CellTopLeftX= List(['ExpressionValue'])
+    _.CellTopLeftX.prototype.process= function() this.data[0].process({object: 'TopLeft', property: 'x'})
+
+    _.CellTopLeftY= List(['ExpressionValue'])
+    _.CellTopLeftY.prototype.process= function() this.data[0].process({object: 'TopLeft', property: 'y'})
+
+    _.CellBottomRightX= List(['ExpressionValue'])
+    _.CellBottomRightX.prototype.process= function() this.data[0].process({object: 'BottomRight', property: 'x'})
+
+    _.CellBottomRightY= List(['ExpressionValue'])
+    _.CellBottomRightY.prototype.process= function() this.data[0].process({object: 'BottomRight', property: 'y'})
+
+    _.Cell= List([
+        '"["',
+        'CellTopLeftX',
+        '","',
+        'CellTopLeftY',
         Optional([
-            '";"',
-            Optional('StatementList'),
+            '":"',
+            'CellBottomRightX',
+            '","',
+            'CellBottomRightY',
         ]),
+        '"]"',
     ])
-    _.StatementList.prototype.process= function() {
-        if (this.data === undefined) return // undefined
-        let lastResult= this.data[0].process()
-        if (this.data[1].data === undefined) return lastResult
-        return this.data[1].data[1].process()
+    _.Cell.prototype.process= function() {
+        let tlX= this.data[1].process()
+        let tlY= this.data[3].process()
+        let brX= tlX
+        let brY= tlY
+        if (this.data[4].data !== undefined) {
+            brX= this.data[4].data.data[1].process()
+            brY= this.data[4].data.data[3].process()
+        }
+        return 'C([' + tlX +', ' + tlY + ' : ' + brX + ', ' + brY + '])'
     }
 
-    _.Assignment= List([
-        'Variable',
-        '"="',
-        'Statement',
-    ])
-    _.Assignment.prototype.process= function() {
-        if (this.data === undefined) return // undefined
-        let value= this.data[2].process()
-        console.log('would assign variable "%s" with value "%s"', this.data[0].process(), value)
-        return value
-    }
-
-    return _.StatementList
+    return _.Cell
 
 })()
 
 
 var _test= new PARSER()
-var _result= _test.parse("$var=function('huhu')")
+var _result= _test.parse("[ 1, _.x+- 33  : _, _.x ]")
 console.log(_result)
 console.log(_result.process())
 
